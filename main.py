@@ -14,6 +14,9 @@ from keras.optimizers import RMSprop, SGD
 
 
 
+
+
+
 MY_ENV_NAME='FrozenLakeNonskid8x8-v0'
 try:
     spec(MY_ENV_NAME)
