@@ -6,8 +6,11 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.distributions import Categorical
+from gym.envs.toy_text.frozen_lake import FrozenLakeEnv
 
-env = gym.make("FrozenLake-v0").unwrapped
+env = FrozenLakeEnv(map_name="8x8")
+env = FrozenLakeEnv(is_slippery=False)
+#env = gym.make("FrozenLake-v0").unwrapped
 
 state_size = env.observation_space.n
 action_size = env.action_space.n
@@ -63,8 +66,10 @@ def trainIters(actor, critic, n_iters):
     sumScores=0
     avgScores = []
     dicIterReward={}
+    dicIterScore = {}
     optimizerA = optim.Adam(actor.parameters())
     optimizerC = optim.Adam(critic.parameters())
+    sumOfi = 0
     for iter in range(n_iters):
         state = env.reset()
         log_probs = []
@@ -74,7 +79,7 @@ def trainIters(actor, critic, n_iters):
         entropy = 0
         env.reset()
         
-
+        
         for i in count():
             #env.render()
             state = torch.FloatTensor(to_onehot(state_size,state))
@@ -94,12 +99,18 @@ def trainIters(actor, critic, n_iters):
             masks.append(torch.tensor([1-done], dtype=torch.float))
             
             state = next_state
-            if reward:
-                print('Iteration: {}, Score: {},  reward: {}'.format(iter, i, reward))
-            
+            #if reward:
+                #print('Iteration: {}, Score: {},  reward: {}'.format(iter, i, reward))
+            sumOfi += i
             if done :
-                dicIterReward[iter] = reward
+                if (reward):
+                    dicIterReward[iter] = reward
+                if(iter%9 == 0):
+                    
+                    dicIterScore[iter] = sumOfi / 9
+                    sumOfi = 0
                 break
+            
 
             next_state = torch.FloatTensor(to_onehot(state_size, next_state))
             next_value = critic(next_state)
@@ -122,14 +133,24 @@ def trainIters(actor, critic, n_iters):
         optimizerC.step()
     
     import matplotlib.pyplot as plt
-    plt.figure(figsize=(70, 2))
-    lists = sorted(dicIterReward.items())
-    x, y = zip(*lists)
-    plt.plot(x, y)    
-    #plt.hist(dicIterReward.Keys(), dicIterReward.Values())
+    
+    fig = plt.figure()
+    
+    rewardLists = sorted(dicIterReward.items())
+    scoreLists = sorted(dicIterScore.items())
+    rx, ry = zip(*rewardLists)
+    sx, sy = zip(*scoreLists)
+
+    
+    fig.add_subplot(211)
+    plt.scatter(rx, ry, s=2)
+
+    fig.add_subplot(212)
+    plt.plot(sx, sy)
+    #plt.figure(figsize=(70, 2))
+    fig.set_figwidth(70)
     plt.show()
-
-
+    
     
     #torch.save(actor, 'model/actor.pkl')
     #torch.save(critic, 'model/critic.pkl')
