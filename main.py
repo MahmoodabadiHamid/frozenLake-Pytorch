@@ -71,35 +71,38 @@ def trainIters(actor, critic, n_iters):
         values = []
         rewards = []
         masks = []
-        #entropy = 0
+        entropy = 0
         env.reset()
         
+
         for i in count():
             #env.render()
             state = torch.FloatTensor(to_onehot(state_size,state))
             
-            dist  = actor(state)
-            value = critic(state)
+            dist, value = actor(state), critic(state)
             
             action = dist.sample()
+            
             next_state, reward, done, _ = env.step(int(action))
             
             log_prob = dist.log_prob(action).unsqueeze(0)
-            #entropy += dist.entropy().mean()
-
+            entropy += dist.entropy().mean()
+            
             log_probs.append(log_prob)
             values.append(value)
             rewards.append(torch.tensor([reward], dtype=torch.float))
             masks.append(torch.tensor([1-done], dtype=torch.float))
+            
+            state = next_state
             if reward:
                 print('Iteration: {}, Score: {},  reward: {}'.format(iter, i, reward))
+            
             if done :
                 dicIterReward[iter] = reward
                 break
-            state = next_state
+
             next_state = torch.FloatTensor(to_onehot(state_size, next_state))
             next_value = critic(next_state)
-            
         
         returns = compute_returns(next_value, rewards, masks)
         
@@ -108,10 +111,9 @@ def trainIters(actor, critic, n_iters):
         values = torch.cat(values)
 
         advantage = returns - values
-        
+
         actor_loss = -(log_probs * advantage.detach()).mean()
         critic_loss = advantage.pow(2).mean()
-        
         optimizerA.zero_grad()
         optimizerC.zero_grad()
         actor_loss.backward()
@@ -120,12 +122,15 @@ def trainIters(actor, critic, n_iters):
         optimizerC.step()
     
     import matplotlib.pyplot as plt
-    plt.figure(figsize=(7, 1))
+    plt.figure(figsize=(70, 2))
     lists = sorted(dicIterReward.items())
     x, y = zip(*lists)
     plt.plot(x, y)    
     #plt.hist(dicIterReward.Keys(), dicIterReward.Values())
     plt.show()
+
+
+    
     #torch.save(actor, 'model/actor.pkl')
     #torch.save(critic, 'model/critic.pkl')
     env.close()
@@ -142,30 +147,10 @@ if __name__ == '__main__':
         print('Critic Model loaded')
     else:
         critic = Critic(state_size, action_size)
-print('Starting')
+print('Starting...')
 trainIters(actor, critic, n_iters=100)
 
 
 
 
 
-'''
-     print('values      ', values.shape)
-        print('returns     ', returns.shape)
-        print('advantage   ', advantage.shape)
-        print('log_probs   ', log_probs.shape)
-
-        print()
-        print('values[0]   ' ,values[0])
-        print('returns     ', returns[0])
-        print('advantage   ', advantage[0])
-        print('log_probs   ', log_probs[0])
-        print()
-        
-        print('actor_loss  ',actor_loss)
-        print()
-        print('critic_loss ', critic_loss)
-        print('__________________________________________')
-        input()
-
-'''
