@@ -123,19 +123,19 @@ class game():
         
         while True:
                     
-            state = self.getState()
+            
                 
             action = self.actor(state)
 
             self.angle, self.playerMoveRate = float(action[0])+90, float(action[1])+2 # action[0] -> distance; action[1] -> angle
 
             done, reward = self.step()
-
             value = self.critic(state)
-
             #log_prob = dist.log_prob(self.Action).unsqueeze(0)
             #self.log_probs.append(log_prob)
-                
+
+            state = self.getState()
+            
             self.next_state = torch.FloatTensor(state)
             self.next_value = self.critic(self.next_state)
                 
@@ -146,9 +146,7 @@ class game():
             if self.playerHasHitBaddie():
                 break
             self.updateDisplay()
-                
-                
-                        
+                              
             self.mainClock.tick(self.FPS)
         self.terminate()
         
