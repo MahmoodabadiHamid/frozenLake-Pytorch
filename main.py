@@ -17,7 +17,7 @@ def main(numOfEpisodes):
         critic = torch.load('model/critic.pkl')
         print('Critic Model loaded')
     else:
-        critic = networks.Critic(state_size, action_size)
+        critic = networks.Critic(state_size, 1)
                 
     optimizerA = optim.Adam(actor.parameters())
     optimizerC = optim.Adam(critic.parameters())

@@ -63,7 +63,7 @@ class Critic(nn.Module):
             nn.Linear(4608, 20 ),
             nn.Linear(20, 20 * 2),
             nn.Linear(20 * 2, 300),
-            nn.Linear(300, self.action_size))
+            nn.Linear(300, 1))
         for i in range(len(self.fc)):
             torch.nn.init.normal_(self.fc[i].weight, 0, 0.5)
         
