@@ -258,7 +258,7 @@ action_size = env.action_space.n
 class Actor(nn.Module):
     def __init__(self, state_size, action_size):
         print('a')
-        input(state_size)
+        
         super(Actor, self).__init__()
         self.state_size = state_size
         self.action_size = action_size
@@ -326,10 +326,8 @@ def trainIters(actor, critic, n_iters):
         
         for i in count():
             #env.render()
-            print(state)
             state = torch.FloatTensor(to_onehot(state_size,state))
-            print(state)
-            input('g')
+            
             dist, value = actor(state), critic(state)
             
             action = dist.sample()
@@ -363,7 +361,7 @@ def trainIters(actor, critic, n_iters):
             next_value = critic(next_state)
         
         returns = compute_returns(next_value, rewards, masks)
-        
+        print(len(returns))
         log_probs = torch.cat(log_probs)
         returns = torch.cat(returns).detach()
         values = torch.cat(values)

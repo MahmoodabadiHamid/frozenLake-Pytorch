@@ -1,4 +1,4 @@
-import random, os, networks, gameEnv, pygame
+import random, os, networks, gameEnv, torch
 from torchvision import transforms
 import torch.optim as optim
 
@@ -11,11 +11,14 @@ def main(numOfEpisodes):
         print('Actor Model loaded')
     else:
         actor = networks.Actor(state_size, action_size)
+        
+        
     if os.path.exists('model/critic.pkl') and False:
         critic = torch.load('model/critic.pkl')
         print('Critic Model loaded')
     else:
         critic = networks.Critic(state_size, action_size)
+                
     optimizerA = optim.Adam(actor.parameters())
     optimizerC = optim.Adam(critic.parameters())
     transform = transforms.Compose([
@@ -26,10 +29,12 @@ def main(numOfEpisodes):
             ])
         #if b['rect'].top > winH:
              #baddies.remove(b)
-    for _ in range(10):        
+    for _ in range(numOfEpisodes):        
         game =  gameEnv.game(actor, critic, transform)
         actor_loss, critic_loss = game.play()
-        
+        print('f')
+        print(actor_loss)
+        input(critic_loss)
         optimizerA.zero_grad()
         optimizerC.zero_grad()
         actor_loss.backward()
@@ -38,4 +43,26 @@ def main(numOfEpisodes):
         optimizerC.step()
 
 if __name__ == '__main__':
-    main(numOfEpisodes = 10)
+    main(numOfEpisodes = 1)
+
+
+
+
+
+
+
+
+
+
+
+'''
+!pip install torch, pygame, torchvision
+!pip install -q xlrd
+!git clone https://github.com/MahmoodabadiHamid/frozenLake-Pytorch
+import os
+os.chdir('/content/frozenLake-Pytorch')
+
+os.putenv('SDL_VIDEODRIVER', 'fbcon')
+os.environ["SDL_VIDEODRIVER"] = "dummy"
+%run main.py
+'''
