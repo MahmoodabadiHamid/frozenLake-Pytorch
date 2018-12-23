@@ -55,9 +55,9 @@ class game():
 
     def getState(self):
         state = pygame.surfarray.array3d(pygame.display.get_surface())
-        if (random.randint(0,100) == 2):
-            plt.imshow(state)
-            plt.show()
+        #if (random.randint(0,100) == 2):
+            #plt.imshow(state)
+            #plt.show()
         state = state.transpose((2, 0, 1))
         state = np.ascontiguousarray(state, dtype=np.float32) / 255
         state = torch.from_numpy(state)
