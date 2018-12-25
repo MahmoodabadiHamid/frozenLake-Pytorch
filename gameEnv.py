@@ -42,7 +42,7 @@ class game():
         self.obstacleAddCounter = 10
         self.log_probs = []
         if (self.level == 'EASY'):
-            print('Easy level')
+            
             self.rects = [
                 [437, 396, 31, 31],
                 [196, 449, 28, 28],
@@ -76,7 +76,7 @@ class game():
                 self.destiny.append(destiny)
 
         elif(self.level == 'MEDIUM'):
-            print('Medium level')
+            
             for _ in range (self.obstacleAddCounter):
                 self.baddiesize = random.randint(self.obstacleMinSiz, self.obstacleMaxSiz)
                 
@@ -104,7 +104,7 @@ class game():
                         break
     
         elif(self.level == 'HARD'):
-            print('Hard level')
+            
             self.obstacleMinSpd = 2
             self.obstacleMaxSpd = 5
             for _ in range (self.obstacleAddCounter):
@@ -258,6 +258,6 @@ class game():
         
             
 if __name__ == '__main__':
-    main.main(numOfEpisodes = 10000)
+    main.main(numOfEpisodes = 100000)
 
 
