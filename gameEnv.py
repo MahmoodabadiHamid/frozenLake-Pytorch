@@ -1,3 +1,4 @@
+import main
 import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
@@ -10,37 +11,131 @@ import math
 
 class game():
     
-    def __init__(self, actor, critic, transform):
+    def __init__(self, actor, critic, transform, level):
+        self.level = level
         self.actor = actor
         self.critic = critic
         self.transform = transform
-        self.playerImage = pygame.image.load('large.gif')
-        self.baddieImage = pygame.image.load('baddie.jpg')
+        self.playerImage = pygame.image.load('files/large.gif')
+        self.baddieImage = pygame.image.load('files/baddie.jpg')
+        self.destinyImage = pygame.image.load('files/destiny.png')
         self.playerRect = self.playerImage.get_rect()
         self.winW = 600
         self.winH = 600
         self.bgColor = (0, 0, 0)
-        self.FPS = 40
+        self.FPS = 500
         self.obstacleMinSiz = 20
         self.obstacleMaxSiz = 40
+        self.destinyMinSiz = 60
+        self.destinyMaxSiz = 60
 
         self.obstacleMinSpd = 0
         self.obstacleMaxSpd = 0
 
-        self.obstacleAddRate = 10
+        self.obstacleAddRate = 100
         self.playerMoveRate = 10
-        self.moveLeft = self.moveRight = self.moveUp = self.moveDown = False
         pygame.init()
         self.mainClock = pygame.time.Clock()
         self.windowSurface = pygame.display.set_mode((self.winW, self.winH))
         self.baddies = []
-        self.obstacleAddCounter = 0
+        self.destiny = []
+        self.obstacleAddCounter = 10
         self.log_probs = []
+        if (self.level == 'EASY'):
+            
+            self.rects = [
+                [437, 396, 31, 31],
+                [196, 449, 28, 28],
+                [249, 363, 21, 21],
+                [460, 592, 30, 30],
+                [110, 583, 27, 27],
+                [428, 111, 31, 31],
+                [207, 281, 32, 32],
+                [370, 162, 22, 22],
+                [386, 333, 25, 25],
+                [256, 171, 29, 29],
+                ]
+            
+            
+            for i in range (self.obstacleAddCounter):
+                self.baddiesize = random.randint(self.obstacleMinSiz, self.obstacleMaxSiz)
+                
+                newBaddie = {'rect'   : pygame.Rect(self.rects[i]),
+                             'speed'  : 0,
+                             'surface': pygame.transform.scale(self.baddieImage, (self.baddiesize, self.baddiesize)),
+                                    }
+                self.baddies.append(newBaddie)
+                
+            for i in range (1):
+                self.destinySize = random.randint(self.destinyMinSiz, self.destinyMaxSiz)
+                
+                destiny = {'rect'   : pygame.Rect(0,0,40,40),
+                             'speed'  : 0,
+                             'surface': pygame.transform.scale(self.destinyImage, (self.destinySize, self.destinySize)),
+                                    }
+                self.destiny.append(destiny)
+
+        elif(self.level == 'MEDIUM'):
+            
+            for _ in range (self.obstacleAddCounter):
+                self.baddiesize = random.randint(self.obstacleMinSiz, self.obstacleMaxSiz)
+                
+                newBaddie = {'rect'   : pygame.Rect(random.randint(0, self.winW-self.baddiesize), 0 - self.baddiesize, self.baddiesize, self.baddiesize),
+                             'speed'  : random.randint(self.obstacleMinSpd, self.obstacleMaxSpd),
+                             'surface': pygame.transform.scale(self.baddieImage, (self.baddiesize, self.baddiesize)),
+                                    }
+                self.baddies.append(newBaddie)
+                
+            for i in range (1):
+                self.destinySize = random.randint(self.destinyMinSiz, self.destinyMaxSiz) 
+                
+                destiny = {'rect'   : pygame.Rect(0,0,40,40),
+                             'speed'  : 0,
+                             'surface': pygame.transform.scale(self.destinyImage, (self.destinySize, self.destinySize)),
+                                    }
+                self.destiny.append(destiny)
+                
+            for b in self.baddies[:]:
+                while True:
+                    b['rect'].top = random.randint(0, self.winW)
+                    b['rect'].left =random.randint(0, self.winH)
+                    
+                    if(not self.playerHasHitBaddie()):
+                        break
+    
+        elif(self.level == 'HARD'):
+            
+            self.obstacleMinSpd = 2
+            self.obstacleMaxSpd = 5
+            for _ in range (self.obstacleAddCounter):
+                self.baddiesize = random.randint(self.obstacleMinSiz, self.obstacleMaxSiz)
+                
+                newBaddie = {'rect'   : pygame.Rect(random.randint(0, self.winW-self.baddiesize), 0 - self.baddiesize, self.baddiesize, self.baddiesize),
+                             'speed'  : random.randint(self.obstacleMinSpd, self.obstacleMaxSpd),
+                             'surface': pygame.transform.scale(self.baddieImage, (self.baddiesize, self.baddiesize)),
+                                    }
+                self.baddies.append(newBaddie)
+            for i in range (1):
+                self.destinySize = random.randint(self.destinyMinSiz, self.destinyMaxSiz)
+                
+                destiny = {'rect'   : pygame.Rect(0,0,40,40),
+                             'speed'  : 0,
+                             'surface': pygame.transform.scale(self.destinyImage, (self.destinySize, self.destinySize)),
+                                    }
+                self.destiny.append(destiny)
+            for b in self.baddies[:]:
+                while False:
+                    b['rect'].top = random.randint(0, self.winW)
+                    b['rect'].left =random.randint(0, self.winH)
+                    if(not self.playerHasHitBaddie()):
+                        break
+        
 
     def getState(self):
         state = pygame.surfarray.array3d(pygame.display.get_surface())
-        #plt.imshow(state)
-        #plt.show()
+        #if (random.randint(0,100) == 2):
+            #plt.imshow(state)
+            #plt.show()
         state = state.transpose((2, 0, 1))
         state = np.ascontiguousarray(state, dtype=np.float32) / 255
         state = torch.from_numpy(state)
@@ -64,6 +159,12 @@ class game():
             if self.playerRect.colliderect(b['rect']):
                 return True
         return False
+    
+    def playerHasRichDestiny(self):
+        for d in self.destiny:
+            if self.playerRect.colliderect(d['rect']):
+                return True
+        return False
 
 
     def compute_returns(self, next_value, rewards, masks, gamma=0.99):
@@ -78,13 +179,23 @@ class game():
     def step(self):
         reward = 0
         done = 0
-
-        self.playerRect.move_ip(math.sin(self.angle) * self.playerMoveRate,0)
-        self.playerRect.move_ip(0, math.cos(self.angle)* self.playerMoveRate)
+        epsilon = 0.0001
+        self.playerRect.x += math.ceil(math.sin(self.angle) + epsilon * self.playerMoveRate + epsilon)
+        self.playerRect.y += math.ceil(math.cos(self.angle) + epsilon * self.playerMoveRate + epsilon)
         
-        if self.playerHasHitBaddie():
-            reward = -1
+        #self.playerRect.move_ip(math.sin(self.angle) * self.playerMoveRate,0)
+        #self.playerRect.move_ip(0, math.cos(self.angle)* self.playerMoveRate)
+        
+        if (self.playerRect.top > self.winH or self.playerRect.top < 0 or self.playerRect.left > self.winW or self.playerRect.left < 0):
+            reward = -1000
             done = 1
+        if self.playerHasHitBaddie():
+            reward = -1000
+            done = 1
+        if self.playerHasRichDestiny():
+            reward = +1000
+            done = 1
+        
         return done, reward
 
     def updateDisplay(self):
@@ -97,21 +208,12 @@ class game():
         self.windowSurface.blit(self.playerImage, self.playerRect)
         for b in self.baddies:
            self.windowSurface.blit(b['surface'], b['rect'])
+        for d in self.destiny:
+            self.windowSurface.blit(d['surface'], d['rect'])
         pygame.display.update()
 
         
     def play(self):
-        for _ in range (10):
-            obstacleAddCounter = 0
-            self.baddiesize = random.randint(self.obstacleMinSiz, self.obstacleMaxSiz)
-            newBaddie = {'rect': pygame.Rect(random.randint(0, self.winW-self.baddiesize), 0 - self.baddiesize, self.baddiesize, self.baddiesize),
-                                'speed': random.randint(self.obstacleMinSpd, self.obstacleMaxSpd),
-                                'surface':pygame.transform.scale(self.baddieImage, (self.baddiesize, self.baddiesize)),
-                                }
-            self.baddies.append(newBaddie)
-        for b in self.baddies[:]:
-            b['rect'].top = random.randint(0, self.winW)
-            b['rect'].left =random.randint(0, self.winH)
 
         self.values = []
         rewards = []
@@ -119,17 +221,15 @@ class game():
         reward = 0
         done = 0
         self.playerRect.topleft = (self.winW / 2, self.winH - 50)
+        self.updateDisplay()
         state = self.getState()
-        
+        stepCounter = 0
         while True:
-                    
-            
-                
+            stepCounter += 1    
             action = self.actor(state)
 
-            self.angle, self.playerMoveRate = float(action[0])+90, float(action[1])+2 # action[0] -> distance; action[1] -> angle
-
-            done, reward = self.step()
+            self.angle, self.playerMoveRate = float(action[0]), float(action[1]) # action[0] -> distance; action[1] -> angle
+            reward = self.step()
             value = self.critic(state)
             #log_prob = dist.log_prob(self.Action).unsqueeze(0)
             #self.log_probs.append(log_prob)
@@ -138,20 +238,24 @@ class game():
             
             self.next_state = torch.FloatTensor(state)
             self.next_value = self.critic(self.next_state)
-                
+            
             self.values.append(self.next_value)
             rewards.append(torch.tensor([reward], dtype=torch.float))
             masks.append(torch.tensor([1-done], dtype=torch.float))
 
-            if self.playerHasHitBaddie():
+            if (self.playerHasHitBaddie()       or
+              self.playerRect.top > self.winH   or
+              self.playerRect.top < 0           or
+              self.playerRect.left > self.winW  or
+              self.playerRect.left < 0):
                 break
             self.updateDisplay()
                               
             self.mainClock.tick(self.FPS)
         self.terminate()
         
-        
-        returns = self.compute_returns(self.values, rewards, masks)
+        print('stepCounter', stepCounter)
+        returns = self.compute_returns(self.next_value, rewards, masks)
 
         returns = torch.cat(returns).detach()
         self.values = torch.cat(self.values)
@@ -163,3 +267,7 @@ class game():
         return  self.actor_loss, self.critic_loss
         
             
+if __name__ == '__main__':
+    main.main(numOfEpisodes = 100000)
+
+
