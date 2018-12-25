@@ -15,6 +15,7 @@ class game():
         #self.BARRIERRADIUS = 0.06
         #self.ROBOTRADIUS = 0.15
         #self.W = 2 * self.ROBOTRADIUS
+		self.PLAYFIELDCORNERS = (-3.0, -3.0, 3.0, 3.0)
         #self.target = (PLAYFIELDCORNERS[2] + 1.0, 0)
         #self.k = 160 # pixels per metre for graphics
         #self.x = PLAYFIELDCORNERS[0] - 0.5
@@ -185,7 +186,7 @@ class game():
         #print "RRT!"
         root = anytree.Node((x, y))
         for i in range(10000):
-            randompoint = ((random.uniform(PLAYFIELDCORNERS[0], PLAYFIELDCORNERS[2] + 1.0), random.uniform(PLAYFIELDCORNERS[1], PLAYFIELDCORNERS[3])))
+            randompoint = ((random.uniform(self.PLAYFIELDCORNERS[0], self.PLAYFIELDCORNERS[2] + 1.0), random.uniform(self.PLAYFIELDCORNERS[1], self.PLAYFIELDCORNERS[3])))
             closestnode = findClosestNode(randompoint[0], randompoint[1], root)
 
             # Now we have closest node, try to create new node
