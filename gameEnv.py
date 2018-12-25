@@ -23,7 +23,7 @@ class game():
         self.winW = 600
         self.winH = 600
         self.bgColor = (0, 0, 0)
-        self.FPS = 200
+        self.FPS = 500
         self.obstacleMinSiz = 20
         self.obstacleMaxSiz = 40
         self.destinyMinSiz = 60
@@ -34,7 +34,6 @@ class game():
 
         self.obstacleAddRate = 100
         self.playerMoveRate = 10
-        #self.moveLeft = self.moveRight = self.moveUp = self.moveDown = False
         pygame.init()
         self.mainClock = pygame.time.Clock()
         self.windowSurface = pygame.display.set_mode((self.winW, self.winH))

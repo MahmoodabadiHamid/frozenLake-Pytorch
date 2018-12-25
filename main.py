@@ -5,6 +5,7 @@ import torch.optim as optim
 
 
 def main(numOfEpisodes):
+    print('Version 0')
     state_size = 50
     action_size = 2
     if os.path.exists('model/actor.pkl')  :
@@ -30,7 +31,7 @@ def main(numOfEpisodes):
         #if b['rect'].top > winH:
              #baddies.remove(b)
     for nop in range(numOfEpisodes):
-        if (nop%10) == 0:
+        if (nop%100) == 0:
             print('episode: ',nop)
         game =  gameEnv.game(actor, critic, transform, level = 'EASY')
         actor_loss, critic_loss = game.play()
