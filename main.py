@@ -5,7 +5,7 @@ import torch.optim as optim
 
 
 def main(numOfEpisodes):
-    print('Version 0')
+    print('Version 1')
     state_size = 50
     action_size = 2
     if os.path.exists('model/actor.pkl')  :
