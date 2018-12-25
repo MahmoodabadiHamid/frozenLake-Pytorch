@@ -87,7 +87,7 @@ class game():
                 self.baddies.append(newBaddie)
                 
             for i in range (1):
-                self.destinySize = random.randint(self.destinyMinSiz, self.destinyMaxSiz)
+                self.destinySize = random.randint(self.destinyMinSiz, self.destinyMaxSiz) 
                 
                 destiny = {'rect'   : pygame.Rect(0,0,40,40),
                              'speed'  : 0,

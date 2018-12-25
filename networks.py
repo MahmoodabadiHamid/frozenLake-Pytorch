@@ -1,3 +1,4 @@
+import main
 import torch.nn.functional as F
 from torch.distributions import Categorical
 import torch.nn as nn
@@ -18,22 +19,22 @@ class Actor(nn.Module):
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2))
+
+        self.l1 = nn.Linear(4608, 20 )
+        self.l2 = nn.Linear(20, 40)
+        self.l3 = nn.Linear(40, 30)
+        self.l4 = nn.Linear(30, 2)
         
-        self.fc = nn.Sequential(
-            nn.Linear(4608, 20 ),
-            nn.Linear(20, 20 * 2),
-            nn.Linear(20 * 2, 300),
-            nn.Linear(300, self.action_size))
-        for i in range(len(self.fc)):
-            torch.nn.init.normal_(self.fc[i].weight, 0, 0.05)
-    
+     
     def forward(self, state):
         out = self.layer1(state)
         out = self.layer2(out)
         out = out.view(out.size(0), -1)
-        out = F.relu(self.fc(out))
-        #print('out[0,0] ', float(out[0,0]), bool(out[0,0]))
-        #print('out[0,1] ' , float(out[0,1]), bool(out[0,1]))
+        #out = F.relu(self.fc(out))
+        out = F.tanh(self.l1(out))
+        out = F.relu(self.l2(out))
+        out = F.sigmoid(self.l3(out))
+        out = (self.l4(out))        
         return out[0]
     
         #distribution = Categorical(F.softmax(out, dim=-1))
@@ -59,21 +60,35 @@ class Critic(nn.Module):
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2))
+        
         self.fc = nn.Sequential(
             nn.Linear(4608, 20 ),
             nn.Linear(20, 20 * 2),
             nn.Linear(20 * 2, 300),
             nn.Linear(300, 1))
-        for i in range(len(self.fc)):
-            torch.nn.init.normal_(self.fc[i].weight, 0, 0.5)
+
+        self.l1 = nn.Linear(4608, 20 )
+        self.l2 = nn.Linear(20, 40)
+        self.l3 = nn.Linear(40, 30)
+        self.l4 = nn.Linear(30, 1)
+
         
     def forward(self, state):
         
         value = self.layer1(state)
         value = self.layer2(value)
         value = value.view(value.size(0), -1)
-        value = self.fc(value)
+        value = F.tanh(self.l1(value))
+        value = F.relu(self.l2(value))
+        value = F.sigmoid(self.l3(value))
+        value = (self.l4(value))
+        #value = self.fc(value)
+
+
+        
         return value
 
 
 
+if __name__ == '__main__':
+    main.main(numOfEpisodes = 100000)
