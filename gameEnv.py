@@ -159,6 +159,12 @@ class game():
             if self.playerRect.colliderect(b['rect']):
                 return True
         return False
+    
+    def playerHasRichDestiny(self):
+        for d in self.destiny:
+            if self.playerRect.colliderect(d['rect']):
+                return True
+        return False
 
 
     def compute_returns(self, next_value, rewards, masks, gamma=0.99):
@@ -181,11 +187,15 @@ class game():
         #self.playerRect.move_ip(0, math.cos(self.angle)* self.playerMoveRate)
         
         if (self.playerRect.top > self.winH or self.playerRect.top < 0 or self.playerRect.left > self.winW or self.playerRect.left < 0):
-            reward = -1
+            reward = -1000
             done = 1
         if self.playerHasHitBaddie():
-            reward = -1
+            reward = -1000
             done = 1
+        if self.playerHasRichDestiny():
+            reward = +1000
+            done = 1
+        
         return done, reward
 
     def updateDisplay(self):
@@ -218,7 +228,7 @@ class game():
             stepCounter += 1    
             action = self.actor(state)
 
-            self.angle, self.playerMoveRate = math.ceil(float(action[0])), math.ceil(float(action[1])) # action[0] -> distance; action[1] -> angle
+            self.angle, self.playerMoveRate = float(action[0]), float(action[1]) # action[0] -> distance; action[1] -> angle
             reward = self.step()
             value = self.critic(state)
             #log_prob = dist.log_prob(self.Action).unsqueeze(0)
@@ -228,7 +238,7 @@ class game():
             
             self.next_state = torch.FloatTensor(state)
             self.next_value = self.critic(self.next_state)
-                
+            
             self.values.append(self.next_value)
             rewards.append(torch.tensor([reward], dtype=torch.float))
             masks.append(torch.tensor([1-done], dtype=torch.float))
