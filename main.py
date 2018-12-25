@@ -12,8 +12,7 @@ def main(numOfEpisodes):
         print('Actor Model loaded')
     else:
         actor = networks.Actor(state_size, action_size)
-        
-        
+                
     if os.path.exists('model/critic.pkl') :
         critic = torch.load('model/critic.pkl')
         print('Critic Model loaded')
@@ -33,7 +32,7 @@ def main(numOfEpisodes):
     for nop in range(numOfEpisodes):
         if (nop%10) == 0:
             print('episode: ',nop)
-        game =  gameEnv.game(actor, critic, transform)
+        game =  gameEnv.game(actor, critic, transform, level = 'EASY')
         actor_loss, critic_loss = game.play()
         actor_loss = Variable(actor_loss, requires_grad = True)
         critic_loss = Variable(critic_loss, requires_grad = True)

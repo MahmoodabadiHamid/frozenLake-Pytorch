@@ -11,7 +11,8 @@ import math
 
 class game():
     
-    def __init__(self, actor, critic, transform):
+    def __init__(self, actor, critic, transform, level):
+        self.level = level
         self.actor = actor
         self.critic = critic
         self.transform = transform
@@ -37,21 +38,74 @@ class game():
         self.baddies = []
         self.obstacleAddCounter = 10
         self.log_probs = []
-        for _ in range (self.obstacleAddCounter):
+        if (self.level == 'EASY'):
+            print('Easy level')
+            self.rects = [
+                [437, 396, 31, 31],
+                [196, 449, 28, 28],
+                [249, 363, 21, 21],
+                [460, 592, 30, 30],
+                [110, 583, 27, 27],
+                [428, 111, 31, 31],
+                [207, 281, 32, 32],
+                [370, 162, 22, 22],
+                [386, 333, 25, 25],
+                [256, 171, 29, 29],
+                ]
+            for _ in range (self.obstacleAddCounter):
+                self.baddiesize = random.randint(self.obstacleMinSiz, self.obstacleMaxSiz)
+                
+                newBaddie = {'rect'   : pygame.Rect(random.randint(0, self.winW-self.baddiesize), 0 - self.baddiesize, self.baddiesize, self.baddiesize),
+                             'speed'  : 0,
+                             'surface': pygame.transform.scale(self.baddieImage, (self.baddiesize, self.baddiesize)),
+                                    }
+                self.baddies.append(newBaddie)
+            for b in self.baddies[:]:
+                while True:
+                    b['rect'].top = random.randint(0, self.winW)
+                    b['rect'].left =random.randint(0, self.winH)
+                    print(b['rect'])
+                    if(not self.playerHasHitBaddie()):
+                        break
+            input()
             
-            self.baddiesize = random.randint(self.obstacleMinSiz, self.obstacleMaxSiz)
-            
-            newBaddie = {'rect'   : pygame.Rect(random.randint(0, self.winW-self.baddiesize), 0 - self.baddiesize, self.baddiesize, self.baddiesize),
-                         'speed'  : random.randint(self.obstacleMinSpd, self.obstacleMaxSpd),
-                         'surface': pygame.transform.scale(self.baddieImage, (self.baddiesize, self.baddiesize)),
-                                }
-            self.baddies.append(newBaddie)
-        for b in self.baddies[:]:
-            while True:
-                b['rect'].top = random.randint(0, self.winW)
-                b['rect'].left =random.randint(0, self.winH)
-                if(not self.playerHasHitBaddie()):
-                    break
+        elif(self.level == 'MEDIUM'):
+            print('Medium level')
+            for _ in range (self.obstacleAddCounter):
+                self.baddiesize = random.randint(self.obstacleMinSiz, self.obstacleMaxSiz)
+                
+                newBaddie = {'rect'   : pygame.Rect(random.randint(0, self.winW-self.baddiesize), 0 - self.baddiesize, self.baddiesize, self.baddiesize),
+                             'speed'  : random.randint(self.obstacleMinSpd, self.obstacleMaxSpd),
+                             'surface': pygame.transform.scale(self.baddieImage, (self.baddiesize, self.baddiesize)),
+                                    }
+                self.baddies.append(newBaddie)
+            for b in self.baddies[:]:
+                while True:
+                    b['rect'].top = random.randint(0, self.winW)
+                    b['rect'].left =random.randint(0, self.winH)
+                    input(b['rect'])
+                    if(not self.playerHasHitBaddie()):
+                        break
+    
+        elif(self.level == 'HARD'):
+            print('Hard level')
+            self.obstacleMinSpd = 2
+            self.obstacleMaxSpd = 5
+            for _ in range (self.obstacleAddCounter):
+                self.baddiesize = random.randint(self.obstacleMinSiz, self.obstacleMaxSiz)
+                
+                newBaddie = {'rect'   : pygame.Rect(random.randint(0, self.winW-self.baddiesize), 0 - self.baddiesize, self.baddiesize, self.baddiesize),
+                             'speed'  : random.randint(self.obstacleMinSpd, self.obstacleMaxSpd),
+                             'surface': pygame.transform.scale(self.baddieImage, (self.baddiesize, self.baddiesize)),
+                                    }
+                self.baddies.append(newBaddie)
+            for b in self.baddies[:]:
+                while True:
+                    b['rect'].top = random.randint(0, self.winW)
+                    b['rect'].left =random.randint(0, self.winH)
+                    if(not self.playerHasHitBaddie()):
+                        break
+        
 
     def getState(self):
         state = pygame.surfarray.array3d(pygame.display.get_surface())
