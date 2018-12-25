@@ -15,7 +15,7 @@ class game():
         #self.BARRIERRADIUS = 0.06
         #self.ROBOTRADIUS = 0.15
         #self.W = 2 * self.ROBOTRADIUS
-		self.PLAYFIELDCORNERS = (-3.0, -3.0, 3.0, 3.0)
+        self.PLAYFIELDCORNERS = (-3.0, -3.0, 3.0, 3.0)
         #self.target = (PLAYFIELDCORNERS[2] + 1.0, 0)
         #self.k = 160 # pixels per metre for graphics
         #self.x = PLAYFIELDCORNERS[0] - 0.5
