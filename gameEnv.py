@@ -67,20 +67,20 @@ class game():
             
             
             for i in range (self.obstacleAddCounter):
-                self.baddiesize = random.randint(self.obstacleMinSiz, self.obstacleMaxSiz)
+                #self.baddiesize = random.randint(self.obstacleMinSiz, self.obstacleMaxSiz)
                 
                 newBaddie = {'rect'   : pygame.Rect(self.rects[i]),
                              'speed'  : 0,
-                             'surface': pygame.transform.scale(self.baddieImage, (self.baddiesize, self.baddiesize)),
+                             'surface': pygame.transform.scale(self.baddieImage, (self.rects[i][2], self.rects[i][3])),
                                     }
                 self.baddies.append(newBaddie)
                 
             for i in range (1):
-                self.destinySize = random.randint(self.destinyMinSiz, self.destinyMaxSiz)
+                #self.destinySize = random.randint(self.destinyMinSiz, self.destinyMaxSiz)
                 
-                destiny = {'rect'   : pygame.Rect(0,0,40,40),
+                destiny = {'rect'   : pygame.Rect(10,10,40,40),
                              'speed'  : 0,
-                             'surface': pygame.transform.scale(self.destinyImage, (self.destinySize, self.destinySize)),
+                             'surface': pygame.transform.scale(self.destinyImage, (self.rects[i][2], self.rects[i][3])),
                                     }
                 self.destiny.append(destiny)
 
@@ -295,10 +295,21 @@ class game():
            b['rect'].move_ip(0, b['speed'])
         self.windowSurface.fill(self.bgColor)        
         self.windowSurface.blit(self.playerImage, self.playerRect)
+        
         for b in self.baddies:
-           self.windowSurface.blit(b['surface'], b['rect'])
+            self.windowSurface.blit(b['surface'], b['rect'])
+            posX = int(b['rect'].x + int(b['rect'].w/2))
+            posY = int(b['rect'].y + int(b['rect'].w/2))
+            r = int(math.sqrt((b['rect'].x - posX)**2 + (b['rect'].y - posY)**2))
+            pygame.draw.circle(self.windowSurface, (255,0,0,0), (posX,posY), r,1)
+            
         for d in self.destiny:
             self.windowSurface.blit(d['surface'], d['rect'])
+            posX = int(d['rect'].x + int(d['rect'].w/2))
+            posY = int(d['rect'].y + int(d['rect'].h/2))
+            r = int(math.sqrt((d['rect'].x - posX)**2 + (d['rect'].y - posY)**2))
+            pygame.draw.circle(self.windowSurface, (255,0,0,0), (posX,posY), r,1)
+            
         pygame.display.update()
 
         
