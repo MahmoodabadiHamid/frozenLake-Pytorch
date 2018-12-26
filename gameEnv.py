@@ -310,7 +310,12 @@ class game():
             posY = int(d['rect'].y + int(d['rect'].h/2))
             r = int(math.sqrt((d['rect'].x - posX)**2 + (d['rect'].y - posY)**2))
             pygame.draw.circle(self.windowSurface, (255,0,0,0), (posX,posY), r,1)
-            
+
+        pygame.draw.line(self.windowSurface, (255,0,0,0), (0, 0), (self.winW, 0))
+        pygame.draw.line(self.windowSurface, (255,0,0,0), (0, 0), (0, self.winH))
+        pygame.draw.line(self.windowSurface, (255,0,0,0), (0, self.winH-1), (self.winW-1, self.winH-1))
+        pygame.draw.line(self.windowSurface, (255,0,0,0), (self.winW-1, 0), (self.winW-1, self.winH-1))
+        
         pygame.display.update()
 
         
