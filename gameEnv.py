@@ -265,7 +265,7 @@ class game():
                  return True
          return False
 
-    def compute_returns(self, next_value, rewards, masks, gamma=0.99):
+    def compute_returns(self, next_value, rewards, masks, gamma=0.9):
         R = next_value
         returns = []
         for step in reversed(range(len(rewards))):
@@ -275,7 +275,7 @@ class game():
 
 
     def step(self):
-        reward = 0
+        reward = -100
         done = 0
         epsilon = 0.0001
         self.playerRect.x += math.ceil(math.sin(self.angle) + epsilon * self.playerMoveRate + epsilon)

@@ -1,5 +1,5 @@
 import main
-import torch.nn.functional as F
+#import torch.nn.functional as F
 from torch.distributions import Categorical
 import torch.nn as nn
 import torch
@@ -31,9 +31,9 @@ class Actor(nn.Module):
         out = self.layer2(out)
         out = out.view(out.size(0), -1)
         #out = F.relu(self.fc(out))
-        out = F.tanh(self.l1(out))
-        out = F.relu(self.l2(out))
-        out = F.sigmoid(self.l3(out))
+        out = torch.tanh(self.l1(out))
+        out = torch.relu(self.l2(out))
+        out = torch.sigmoid(self.l3(out))
         out = (self.l4(out))        
         return out[0]
     
@@ -78,9 +78,9 @@ class Critic(nn.Module):
         value = self.layer1(state)
         value = self.layer2(value)
         value = value.view(value.size(0), -1)
-        value = F.tanh(self.l1(value))
-        value = F.relu(self.l2(value))
-        value = F.sigmoid(self.l3(value))
+        value = torch.tanh(self.l1(value))
+        value = torch.relu(self.l2(value))
+        value = torch.sigmoid(self.l3(value))
         value = (self.l4(value))
         #value = self.fc(value)
 
