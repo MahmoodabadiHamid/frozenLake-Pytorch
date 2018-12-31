@@ -20,11 +20,14 @@ class Actor(nn.Module):
             nn.BatchNorm2d(1),
             nn.ReLU(),
             nn.MaxPool2d(2))
-
-        self.l1 = nn.Linear(144, 20 )
-        self.l2 = nn.Linear(20, 40)
-        self.l3 = nn.Linear(40, 30)
-        self.l4 = nn.Linear(30, action_size)
+        self.fc =  nn.Sequential(
+                    nn.Linear(144, 20),
+                    nn.Tanh(),
+                    nn.Linear(20, 40),
+                    nn.ReLU(),
+                    nn.Linear(40, 30),
+                    nn.Sigmoid(),
+                    nn.Linear(30, action_size))
         
      
     def forward(self, state):
@@ -32,11 +35,7 @@ class Actor(nn.Module):
         out = self.layer2(out)
         out = out.view(out.size(0), -1)
 
-        out = torch.tanh(self.l1(out))
-        out = torch.relu(self.l2(out))
-        out = torch.sigmoid(self.l3(out))
-        out = torch.relu(self.l4(out))
-
+        out = self.fc(out)
         return out[0]
 
 
@@ -59,10 +58,14 @@ class Critic(nn.Module):
             nn.ReLU(),
             nn.MaxPool2d(2))
         
-        self.l1 = nn.Linear(144, 20 )
-        self.l2 = nn.Linear(20, 40)
-        self.l3 = nn.Linear(40, 30)
-        self.l4 = nn.Linear(30, action_size)
+        self.fc =  nn.Sequential(
+                    nn.Linear(144, 20 ),
+                    nn.Tanh(),
+                    nn.Linear(20, 40),
+                    nn.ReLU(),
+                    nn.Linear(40, 30),
+                    nn.Sigmoid(),
+                    nn.Linear(30, action_size))
 
         
     def forward(self, state):
@@ -70,12 +73,7 @@ class Critic(nn.Module):
         value = self.layer1(state)
         value = self.layer2(value)
         value = value.view(value.size(0), -1)
-        
-        
-        value = torch.relu(self.l1(value))
-        value = torch.relu(self.l2(value))
-        value = torch.sigmoid(self.l3(value))
-        value = torch.relu(self.l4(value))
+        value = self.fc(value)
         return value
 
 

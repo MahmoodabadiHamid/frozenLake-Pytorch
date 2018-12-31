@@ -8,7 +8,15 @@ def main(numOfEpisodes):
     print('Version 3')
     state_size = 50
     action_size = 2
-    if os.path.exists('model/actor.pkl')  :
+    transform = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.Resize(state_size),
+        transforms.Grayscale(num_output_channels=1),
+        transforms.ToTensor(),
+            ])
+    #if b['rect'].top > winH:
+        #baddies.remove(b)
+    if os.path.exists('model/actor.pkl'):
         actor = torch.load('model/actor.pkl')
         print('Actor Model loaded')
     else:
@@ -19,19 +27,12 @@ def main(numOfEpisodes):
         print('Critic Model loaded')
     else:
         critic = networks.Critic(action_size = 1)
-                
-    optimizerA = optim.Adam(actor.parameters())
-    optimizerC = optim.Adam(critic.parameters())
-    
-    transform = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.Resize(state_size),
-        transforms.Grayscale(num_output_channels=1),
-        transforms.ToTensor(),
-            ])
-        #if b['rect'].top > winH:
-             #baddies.remove(b)
+     
+    optimizerA = optim.Adam(actor.parameters(), lr=1e-4)
+    optimizerC = optim.Adam(critic.parameters(), lr=1e-4)
     a = 4
+
+    
     for nop in range(numOfEpisodes):
         if (nop%100) == 0:
             print('episode: ',nop)
@@ -47,7 +48,10 @@ def main(numOfEpisodes):
         critic_loss.backward()
         optimizerA.step()
         optimizerC.step()
+        
         a+=1
+        
+   
         if a == 5:
             a = 0
             for parameter in (actor.parameters()):
