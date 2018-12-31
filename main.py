@@ -38,7 +38,7 @@ def main(numOfEpisodes):
             print('episode: ',nop)
         game =  gameEnv.game(actor, critic, transform, level = 'EASY')
         actor_loss, critic_loss = game.play()
-
+        
         actor_loss = Variable(actor_loss, requires_grad = True)
         critic_loss = Variable(critic_loss, requires_grad = True)
         

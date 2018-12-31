@@ -360,10 +360,10 @@ class game():
 
             state = self.getState()
             
-            self.next_state = torch.FloatTensor(state)
-            self.next_value = self.critic(self.next_state)
+            self.state = torch.FloatTensor(state)
+            self.value = self.critic(self.state)
                 
-            self.values.append(self.next_value)
+            self.values.append(self.value)
             rewards.append(torch.tensor([reward], dtype=torch.float))
             masks.append(torch.tensor([1-done], dtype=torch.float))
 
@@ -379,7 +379,7 @@ class game():
         self.terminate()
         
         print('stepCounter', stepCounter)
-        returns = self.compute_returns(self.next_value, rewards, masks)
+        returns = self.compute_returns(self.value, rewards, masks)
 
         returns = torch.cat(returns).detach()
         self.values = torch.cat(self.values)
