@@ -40,7 +40,7 @@ class game():
         self.destinyMaxSiz = 60
 
         self.obstacleMinSpd = 0
-        self.obstacleMaxSpd = 0
+        self.obstacleMaxSpd = 2
 
         self.obstacleAddRate = 100
         self.playerMoveRate = 10
@@ -265,7 +265,7 @@ class game():
                  return True
          return False
 
-    def compute_returns(self, next_value, rewards, masks, gamma=0.9):
+    def compute_returns(self, next_value, rewards, masks, gamma=0.95):
         R = next_value
         returns = []
         for step in reversed(range(len(rewards))):
@@ -275,7 +275,7 @@ class game():
 
 
     def step(self):
-        reward = -100
+        reward = -1
         done = 0
         epsilon = 0.0001
         self.playerRect.x += math.ceil(math.sin(self.angle) + epsilon * self.playerMoveRate + epsilon)
@@ -339,10 +339,20 @@ class game():
         state = self.getState()
         stepCounter = 0
         while True:
-            stepCounter += 1    
+            stepCounter += 1
             action = self.actor(state)
-
+            #print('___________________')
+            #print('angle: ', (action[0]))
+            #print('playerMoveRate: ',(action[1]))
+            #print('___________________')
             self.angle, self.playerMoveRate = math.ceil(float(action[0])), math.ceil(float(action[1])) # action[0] -> distance; action[1] -> angle
+            #print('self.angle ', self.angle)
+            #print('self.playerMoveRate: ', self.playerMoveRate)
+            #input()
+            #print('___________________')
+            #print(self.angle)
+            #print(self.playerMoveRate)
+            
             reward = self.step()
             value = self.critic(state)
             #log_prob = dist.log_prob(self.Action).unsqueeze(0)
@@ -375,7 +385,9 @@ class game():
         self.values = torch.cat(self.values)
 
         advantage = returns - self.values
+        #print(advantage)
         
+        #input()
         self.actor_loss = -(advantage.detach()).mean()
         self.critic_loss = advantage.pow(2).mean()
         return  self.actor_loss, self.critic_loss
