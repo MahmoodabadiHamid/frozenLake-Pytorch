@@ -21,7 +21,7 @@ class game():
         #self.x = PLAYFIELDCORNERS[0] - 0.5
         #self.y = 0.0
         
-        
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.level = level
         self.actor = actor
         self.critic = critic
@@ -148,8 +148,10 @@ class game():
             #plt.show()
         state = state.transpose((2, 0, 1))
         state = np.ascontiguousarray(state, dtype=np.float32) / 255
-        state = torch.from_numpy(state)
-        state = self.transform(state).unsqueeze(0)
+        state = torch.from_numpy(state).to(self.device)
+        state = self.transform(state).unsqueeze(0).to(self.device)
+        #plt.imshow(state)
+        #plt.show()
         return state
     def calculateClosestObstacleDistance(self,x, y, RRTFLAG):
         closestdist = 100000.0
@@ -265,7 +267,7 @@ class game():
                  return True
          return False
 
-    def compute_returns(self, next_value, rewards, masks, gamma=0.95):
+    def compute_returns(self, next_value, rewards, masks, gamma=0.9):
         R = next_value
         returns = []
         for step in reversed(range(len(rewards))):
@@ -278,8 +280,15 @@ class game():
         reward = -1
         done = 0
         epsilon = 0.0001
-        self.playerRect.x += math.ceil(math.sin(self.angle) + epsilon * self.playerMoveRate + epsilon)
-        self.playerRect.y += math.ceil(math.cos(self.angle) + epsilon * self.playerMoveRate + epsilon)
+        self.playerRect.x += (math.sin(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
+        self.playerRect.y += (math.cos(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
+
+        #print(self.playerRect.y)
+        #print(math.cos(self.angle) + epsilon * self.playerMoveRate + epsilon)
+        #print((math.sin(self.angle) + epsilon * self.playerMoveRate + epsilon))
+        #print(self.angle)
+        #print()
+        #print()
         
         #self.playerRect.move_ip(math.sin(self.angle) * self.playerMoveRate,0)
         #self.playerRect.move_ip(0, math.cos(self.angle)* self.playerMoveRate)
@@ -341,17 +350,8 @@ class game():
         while True:
             stepCounter += 1
             action = self.actor(state)
-            #print('___________________')
-            #print('angle: ', (action[0]))
-            #print('playerMoveRate: ',(action[1]))
-            #print('___________________')
-            self.angle, self.playerMoveRate = math.ceil(float(action[0])), math.ceil(float(action[1])) # action[0] -> distance; action[1] -> angle
-            #print('self.angle ', self.angle)
-            #print('self.playerMoveRate: ', self.playerMoveRate)
-            #input()
-            #print('___________________')
-            #print(self.angle)
-            #print(self.playerMoveRate)
+
+            self.angle, self.playerMoveRate = float(action[0]), float(action[1]) # action[0] -> distance; action[1] -> angle
             
             reward = self.step()
             value = self.critic(state)
@@ -364,8 +364,8 @@ class game():
             self.value = self.critic(self.state)
                 
             self.values.append(self.value)
-            rewards.append(torch.tensor([reward], dtype=torch.float))
-            masks.append(torch.tensor([1-done], dtype=torch.float))
+            rewards.append(torch.tensor([reward], dtype=torch.float).to(self.device))
+            masks.append(torch.tensor([1-done], dtype=torch.float).to(self.device))
 
             if (self.playerHasHitBaddie()       or
               self.playerRect.top > self.winH   or
@@ -381,15 +381,13 @@ class game():
         print('stepCounter', stepCounter)
         returns = self.compute_returns(self.value, rewards, masks)
 
-        returns = torch.cat(returns).detach()
-        self.values = torch.cat(self.values)
+        returns = torch.cat(returns).detach().to(self.device)
+        self.values = torch.cat(self.values).to(self.device)
 
         advantage = returns - self.values
-        #print(advantage)
-        
-        #input()
-        self.actor_loss = -(advantage.detach()).mean()
-        self.critic_loss = advantage.pow(2).mean()
+
+        self.actor_loss = -(advantage.detach()).mean().to(self.device)
+        self.critic_loss = advantage.pow(2).mean().to(self.device)
         return  self.actor_loss, self.critic_loss
         
             

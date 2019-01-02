@@ -104,15 +104,19 @@ def trainIters(actor, critic, n_iters):
         actor_loss = -(log_probs * advantage.detach()).mean()
         critic_loss = advantage.pow(2).mean()
 
+        a = (list(actor.linear3.parameters()))
         optimizerA.zero_grad()
         optimizerC.zero_grad()
         actor_loss.backward()
         critic_loss.backward()
         optimizerA.step()
         optimizerC.step()
-        for parameter in (actor.parameters()):
-            print(parameter)
-        input()
+        b = (list(actor.linear3.parameters()))
+        print('a==b? ', bool(a==b))
+        
+        #for parameter in (actor.parameters()):
+        #    print(parameter)
+        #input()
     torch.save(actor, 'model/actor.pkl')
     torch.save(critic, 'model/critic.pkl')
     env.close()
@@ -129,4 +133,4 @@ if __name__ == '__main__':
         print('Critic Model loaded')
     else:
         critic = Critic(state_size, action_size).to(device)
-    trainIters(actor, critic, n_iters=100)
+    trainIters(actor, critic, n_iters=1000)

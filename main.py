@@ -6,6 +6,7 @@ import torch.optim as optim
 
 def main(numOfEpisodes):
     print('Version 3')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     state_size = 50
     action_size = 2
     transform = transforms.Compose([
@@ -20,27 +21,30 @@ def main(numOfEpisodes):
         actor = torch.load('model/actor.pkl')
         print('Actor Model loaded')
     else:
-        actor = networks.Actor(action_size)
+        actor = networks.Actor(action_size).to(device)
                 
     if os.path.exists('model/critic.pkl') :
         critic = torch.load('model/critic.pkl')
         print('Critic Model loaded')
     else:
-        critic = networks.Critic(action_size = 1)
+        critic = networks.Critic(action_size = 1).to(device)
      
     optimizerA = optim.Adam(actor.parameters(), lr=1e-4)
     optimizerC = optim.Adam(critic.parameters(), lr=1e-4)
-    a = 4
+    #a = 2
 
     
     for nop in range(numOfEpisodes):
         if (nop%100) == 0:
             print('episode: ',nop)
+
         game =  gameEnv.game(actor, critic, transform, level = 'EASY')
         actor_loss, critic_loss = game.play()
+        actor_loss = Variable(actor_loss , requires_grad = True)
+        critic_loss = Variable(critic_loss , requires_grad = True)
+
         
-        actor_loss = Variable(actor_loss, requires_grad = True)
-        critic_loss = Variable(critic_loss, requires_grad = True)
+        #a = (list(actor.fc.parameters()))
         
         optimizerA.zero_grad()
         optimizerC.zero_grad()
@@ -48,15 +52,15 @@ def main(numOfEpisodes):
         critic_loss.backward()
         optimizerA.step()
         optimizerC.step()
-        
-        a+=1
-        
-   
-        if a == 5:
-            a = 0
-            for parameter in (actor.parameters()):
-                print(parameter)
-            input()
+
+        #b = (list(actor.fc.parameters()))
+        #print('a==b? ', bool(a==b))
+        #a+=1
+        #if a == 3 and False:
+            #a = 0
+            #print(list(actor.fc[2].parameters()))
+        torch.save(actor,'actor.pkl')
+        torch.save(critic,'critic.pkl')
         #with open('models/actor.pkl', 'w') as f:
             #torch.save(actor_loss.state_dict(), f)
             #torch.save(actor_loss.state_dict() , f)

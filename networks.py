@@ -20,21 +20,37 @@ class Actor(nn.Module):
             nn.BatchNorm2d(1),
             nn.ReLU(),
             nn.MaxPool2d(2))
+
+        self.layer3 = nn.Sequential(
+            nn.Conv2d(1, 1, kernel_size=5, padding=2),
+            nn.BatchNorm2d(1),
+            nn.ReLU(),
+            nn.MaxPool2d(2))
+
+        self.layer4 = nn.Sequential(
+            nn.Conv2d(1, 1, kernel_size=5, padding=2),
+            nn.BatchNorm2d(1),
+            nn.ReLU(),
+            nn.MaxPool2d(2))
+        
         self.fc =  nn.Sequential(
-                    nn.Linear(144, 20),
+                    nn.Linear(9, 20),
                     nn.Tanh(),
                     nn.Linear(20, 40),
                     nn.ReLU(),
-                    nn.Linear(40, 30),
+                    nn.Linear(40, 20),
                     nn.Sigmoid(),
-                    nn.Linear(30, action_size))
+                    nn.Linear(20, action_size))
         
      
     def forward(self, state):
         out = self.layer1(state)
         out = self.layer2(out)
+        out = self.layer3(out)
+        out = self.layer4(out)
         out = out.view(out.size(0), -1)
-
+        out.requires_grad_(True)
+        #print(out)
         out = self.fc(out)
         return out[0]
 
@@ -58,8 +74,20 @@ class Critic(nn.Module):
             nn.ReLU(),
             nn.MaxPool2d(2))
         
+        self.layer3 = nn.Sequential(
+            nn.Conv2d(1, 1, kernel_size=5, padding=2),
+            nn.BatchNorm2d(1),
+            nn.ReLU(),
+            nn.MaxPool2d(2))
+        
+        self.layer4 = nn.Sequential(
+            nn.Conv2d(1, 1, kernel_size=5, padding=2),
+            nn.BatchNorm2d(1),
+            nn.ReLU(),
+            nn.MaxPool2d(2))
+        
         self.fc =  nn.Sequential(
-                    nn.Linear(144, 20 ),
+                    nn.Linear(9, 20),
                     nn.Tanh(),
                     nn.Linear(20, 40),
                     nn.ReLU(),
@@ -72,6 +100,8 @@ class Critic(nn.Module):
 
         value = self.layer1(state)
         value = self.layer2(value)
+        value = self.layer3(value)
+        value = self.layer4(value)
         value = value.view(value.size(0), -1)
         value = self.fc(value)
         return value
