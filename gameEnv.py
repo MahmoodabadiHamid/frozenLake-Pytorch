@@ -21,7 +21,7 @@ class game():
         #self.x = PLAYFIELDCORNERS[0] - 0.5
         #self.y = 0.0
         
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        
         self.level = level
         self.actor = actor
         self.critic = critic
@@ -147,9 +147,9 @@ class game():
             #plt.imshow(state)
             #plt.show()
         state = state.transpose((2, 0, 1))
-        state = np.ascontiguousarray(state, dtype=np.float32) / 255
-        state = torch.from_numpy(state).to(self.device)
-        state = self.transform(state).unsqueeze(0).to(self.device)
+        state = np.ascontiguousarray(state, dtype=np.float32) 
+        state = torch.from_numpy(state)
+        state = self.transform(state).unsqueeze(0)
         #plt.imshow(state)
         #plt.show()
         return state
@@ -279,9 +279,9 @@ class game():
     def step(self):
         reward = -1
         done = 0
-        epsilon = 0.0001
-        self.playerRect.x += (math.sin(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
-        self.playerRect.y += (math.cos(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
+        epsilon = 1e-1#random.uniform(0,1)
+        self.playerRect.x += ((self.angle) + epsilon) #* (self.playerMoveRate + epsilon)#(math.sin(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
+        self.playerRect.y -=  (self.playerMoveRate + epsilon)#(math.cos(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
 
         #print(self.playerRect.y)
         #print(math.cos(self.angle) + epsilon * self.playerMoveRate + epsilon)
@@ -350,7 +350,8 @@ class game():
         while True:
             stepCounter += 1
             action = self.actor(state)
-
+            print(action)
+            input()
             self.angle, self.playerMoveRate = float(action[0]), float(action[1]) # action[0] -> distance; action[1] -> angle
             
             reward = self.step()
@@ -364,8 +365,8 @@ class game():
             self.value = self.critic(self.state)
                 
             self.values.append(self.value)
-            rewards.append(torch.tensor([reward], dtype=torch.float).to(self.device))
-            masks.append(torch.tensor([1-done], dtype=torch.float).to(self.device))
+            rewards.append(torch.tensor([reward], dtype=torch.float))
+            masks.append(torch.tensor([1-done], dtype=torch.float))
 
             if (self.playerHasHitBaddie()       or
               self.playerRect.top > self.winH   or
@@ -381,13 +382,13 @@ class game():
         print('stepCounter', stepCounter)
         returns = self.compute_returns(self.value, rewards, masks)
 
-        returns = torch.cat(returns).detach().to(self.device)
-        self.values = torch.cat(self.values).to(self.device)
+        returns = torch.cat(returns).detach()
+        self.values = torch.cat(self.values)
 
         advantage = returns - self.values
 
-        self.actor_loss = -(advantage.detach()).mean().to(self.device)
-        self.critic_loss = advantage.pow(2).mean().to(self.device)
+        self.actor_loss = -(advantage.detach()).mean()
+        self.critic_loss = advantage.pow(2).mean()
         return  self.actor_loss, self.critic_loss
         
             

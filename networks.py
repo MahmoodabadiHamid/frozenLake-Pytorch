@@ -39,7 +39,7 @@ class Actor(nn.Module):
                     nn.Linear(20, 40),
                     nn.ReLU(),
                     nn.Linear(40, 20),
-                    nn.Sigmoid(),
+                    #nn.Sigmoid(),
                     nn.Linear(20, action_size))
         
      
@@ -50,7 +50,7 @@ class Actor(nn.Module):
         out = self.layer4(out)
         out = out.view(out.size(0), -1)
         out.requires_grad_(True)
-        #print(out)
+        print(out)
         out = self.fc(out)
         return out[0]
 
@@ -92,7 +92,7 @@ class Critic(nn.Module):
                     nn.Linear(20, 40),
                     nn.ReLU(),
                     nn.Linear(40, 30),
-                    nn.Sigmoid(),
+                    #nn.Sigmoid(),
                     nn.Linear(30, action_size))
 
         
