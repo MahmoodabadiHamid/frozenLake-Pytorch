@@ -104,15 +104,14 @@ def trainIters(actor, critic, n_iters):
         actor_loss = -(log_probs * advantage.detach()).mean()
         critic_loss = advantage.pow(2).mean()
 
-        a = (list(actor.linear3.parameters()))
+        
+        
         optimizerA.zero_grad()
         optimizerC.zero_grad()
         actor_loss.backward()
         critic_loss.backward()
         optimizerA.step()
         optimizerC.step()
-        b = (list(actor.linear3.parameters()))
-        print('a==b? ', bool(a==b))
         
         #for parameter in (actor.parameters()):
         #    print(parameter)

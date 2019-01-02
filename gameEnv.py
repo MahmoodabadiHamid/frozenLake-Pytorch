@@ -350,8 +350,8 @@ class game():
         while True:
             stepCounter += 1
             action = self.actor(state)
-            print(action)
-            input()
+            #print(action)
+            #input()
             self.angle, self.playerMoveRate = float(action[0]), float(action[1]) # action[0] -> distance; action[1] -> angle
             
             reward = self.step()
@@ -389,6 +389,8 @@ class game():
 
         self.actor_loss = -(advantage.detach()).mean()
         self.critic_loss = advantage.pow(2).mean()
+        
+        
         return  self.actor_loss, self.critic_loss
         
             

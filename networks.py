@@ -11,25 +11,25 @@ class Actor(nn.Module):
 
         self.layer1 = nn.Sequential(
             nn.Conv2d(1, 1, kernel_size=5, padding=2),
-            nn.BatchNorm2d(1),
+            #nn.BatchNorm2d(1),
             nn.ReLU(),
             nn.MaxPool2d(2))
 
         self.layer2 = nn.Sequential(
             nn.Conv2d(1, 1, kernel_size=5, padding=2),
-            nn.BatchNorm2d(1),
+            #nn.BatchNorm2d(1),
             nn.ReLU(),
             nn.MaxPool2d(2))
 
         self.layer3 = nn.Sequential(
             nn.Conv2d(1, 1, kernel_size=5, padding=2),
-            nn.BatchNorm2d(1),
+            #nn.BatchNorm2d(1),
             nn.ReLU(),
             nn.MaxPool2d(2))
 
         self.layer4 = nn.Sequential(
             nn.Conv2d(1, 1, kernel_size=5, padding=2),
-            nn.BatchNorm2d(1),
+            #nn.BatchNorm2d(1),
             nn.ReLU(),
             nn.MaxPool2d(2))
         
@@ -39,7 +39,7 @@ class Actor(nn.Module):
                     nn.Linear(20, 40),
                     nn.ReLU(),
                     nn.Linear(40, 20),
-                    #nn.Sigmoid(),
+                    nn.Sigmoid(),
                     nn.Linear(20, action_size))
         
      
@@ -50,7 +50,7 @@ class Actor(nn.Module):
         out = self.layer4(out)
         out = out.view(out.size(0), -1)
         out.requires_grad_(True)
-        print(out)
+        #print(out)
         out = self.fc(out)
         return out[0]
 
@@ -64,25 +64,25 @@ class Critic(nn.Module):
         
         self.layer1 = nn.Sequential(
             nn.Conv2d(1, 1, kernel_size=5, padding=2),
-            nn.BatchNorm2d(1),
+            #nn.BatchNorm2d(1),
             nn.ReLU(),
             nn.MaxPool2d(2))
         
         self.layer2 = nn.Sequential(
             nn.Conv2d(1, 1, kernel_size=5, padding=2),
-            nn.BatchNorm2d(1),
+            #nn.BatchNorm2d(1),
             nn.ReLU(),
             nn.MaxPool2d(2))
         
         self.layer3 = nn.Sequential(
             nn.Conv2d(1, 1, kernel_size=5, padding=2),
-            nn.BatchNorm2d(1),
+            #nn.BatchNorm2d(1),
             nn.ReLU(),
             nn.MaxPool2d(2))
         
         self.layer4 = nn.Sequential(
             nn.Conv2d(1, 1, kernel_size=5, padding=2),
-            nn.BatchNorm2d(1),
+            #nn.BatchNorm2d(1),
             nn.ReLU(),
             nn.MaxPool2d(2))
         
@@ -92,7 +92,7 @@ class Critic(nn.Module):
                     nn.Linear(20, 40),
                     nn.ReLU(),
                     nn.Linear(40, 30),
-                    #nn.Sigmoid(),
+                    nn.Sigmoid(),
                     nn.Linear(30, action_size))
 
         
