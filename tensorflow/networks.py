@@ -112,48 +112,6 @@ class Critic:
         sess.run([self.train_op], feed_dict=feed_dict)
 
 
-def main(episodes=100, gamma=0.95, display=False, lamb=1e-5, policy_lr=0.001, value_lr=0.1):
-    tf.reset_default_graph()
-    policy_estimator = Actor(env, lamb=lamb, learning_rate=policy_lr)
-    value_estimator = Critic(env, learning_rate=value_lr)
-    sess = tf.Session()
-    sess.run(tf.global_variables_initializer())
-    stats = []
-    for i_episode in range(episodes):
-        state = env.reset()
-        reward_total = 0
-        while True:
-            action = policy_estimator.predict(state, sess)
-            next_state, reward, done, _ = env.step(action)
-            reward_total += reward
-            target = reward + gamma * value_estimator.predict(next_state, sess)
-            td_error = target - value_estimator.predict(state, sess)
-
-            policy_estimator.update(state, action, advantage=td_error, sess=sess)
-            value_estimator.update(state, target, sess=sess)
-
-            if done:
-                if reward_total<90:
-                    reward=-100
-                    target = reward + gamma * value_estimator.predict(next_state, sess)
-                    td_error = target - value_estimator.predict(state, sess)
-
-                    policy_estimator.update(state, action, advantage=td_error, sess=sess)
-                    value_estimator.update(state, target, sess=sess)
-
-                break
-            state = next_state
-            #env.render()
-        stats.append(reward_total)
-        if np.mean(stats[-100:]) > 90 and len(stats) >= 101:
-            print(np.mean(stats[-100:]))
-            print("Solved.")
-        print("Episode: {}, reward: {}.".format(i_episode, reward_total))
-    return np.mean(stats[-100:])
 
 
-if __name__ == "__main__":
-    policy_lr, value_lr, lamb, gamma = [0.0001, 0.0046415888336127773, 2.782559402207126e-05, 0.999]
-    loss = main(episodes=1000, gamma=gamma, display=False, lamb=lamb, policy_lr=policy_lr, value_lr=value_lr)
-    print(-loss)
-    env.close()
+
