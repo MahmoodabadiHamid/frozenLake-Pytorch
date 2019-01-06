@@ -1,7 +1,8 @@
 from torch.autograd import Variable
-import random, os, networks, gameEnv, torch
+import random, os, gameEnv, torch
 from torchvision import transforms
 import torch.optim as optim
+import pytorch_networks as networks
 
 
 def main(numOfEpisodes):

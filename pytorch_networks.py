@@ -44,6 +44,7 @@ class Actor(nn.Module):
         
      
     def forward(self, state):
+        
         out = self.layer1(state)
         out = self.layer2(out)
         out = self.layer3(out)
