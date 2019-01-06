@@ -5,9 +5,9 @@ import torch.optim as optim
 import pytorch_networks as networks
 
 
-def main(numOfEpisodes):
+def main(episodes=100, gamma=0.95, display=False, lamb=1e-5, policy_lr=0.001, value_lr=0.1):
     print('Version 3')
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
     state_size = 50
     action_size = 2
     transform = transforms.Compose([
@@ -22,14 +22,18 @@ def main(numOfEpisodes):
         actor = torch.load('model/actor.pkl')
         print('Actor Model loaded')
     else:
-        actor = networks.Actor(action_size)#.to(device)
+        actor = networks.PolicyEstimator(env, lamb=lamb, learning_rate=policy_lr)
                 
     if os.path.exists('model/critic.pkl') :
         critic = torch.load('model/critic.pkl')
         print('Critic Model loaded')
     else:
         critic = networks.Critic(action_size = 1)#.to(device)
-     
+
+    tf.reset_default_graph()
+    sess = tf.Session()
+    sess.run(tf.global_variables_initializer())
+    stats = []
     optimizerA = optim.Adam(actor.parameters(), lr=1e-4)
     optimizerC = optim.Adam(critic.parameters(), lr=1e-4)
     
@@ -61,7 +65,8 @@ def main(numOfEpisodes):
 
 
 if __name__ == '__main__':
-    main(numOfEpisodes = 10000)
+    policy_lr, value_lr, lamb, gamma = [0.0001, 0.0046415888336127773, 2.782559402207126e-05, 0.999]
+    main(episodes=1000, gamma=gamma, display=False, lamb=lamb, policy_lr=policy_lr, value_lr=value_lr)
 
 
 
