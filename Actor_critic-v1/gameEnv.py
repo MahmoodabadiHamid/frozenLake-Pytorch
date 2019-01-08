@@ -76,6 +76,7 @@ class game():
                 [370, 162, 22, 22],
                 [386, 333, 25, 25],
                 [256, 171, 29, 29],
+                [400, 500, 89, 69],
                 ]
             
             
@@ -294,7 +295,7 @@ class game():
     def step(self, action):
         reward = -1
         done = 0
-        epsilon = 1e-1#random.uniform(0,1)
+        epsilon = 4#random.uniform(0,1)
         #print(action)
         self.angle = action[0]
         self.playerMoveRate =  action[1]
@@ -302,8 +303,8 @@ class game():
         #action[1]  = action[1] *10
         print(self.angle)
         print(self.playerMoveRate)
-        self.playerRect.x += (1/(self.angle) + epsilon) #* (self.playerMoveRate + epsilon)#(math.sin(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
-        self.playerRect.y +=  (1/self.playerMoveRate + epsilon)#(math.cos(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
+        self.playerRect.x += (self.angle * epsilon) #* (self.playerMoveRate + epsilon)#(math.sin(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
+        self.playerRect.y +=  (self.playerMoveRate * epsilon)#(math.cos(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
         #print(self.playerRect.x)
         #print(self.playerRect.y)
         #print(math.cos(self.angle) + epsilon * self.playerMoveRate + epsilon)
