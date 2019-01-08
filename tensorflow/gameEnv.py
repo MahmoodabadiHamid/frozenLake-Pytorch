@@ -11,13 +11,20 @@ import math
 
 class game():
     
-    def __init__(self, actor, critic, transform, level):
+    def __init__(self, actor, critic, level):
    
         self.PLAYFIELDCORNERS = (-3.0, -3.0, 3.0, 3.0)     
         self.level = level
         self.actor = actor
         self.critic = critic
-        self.transform = transform
+
+        self.transform = transform = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.Resize(state_size),
+            transforms.Grayscale(num_output_channels=1),
+            transforms.ToTensor(),
+                ])
+        
         self.playerImage = pygame.image.load('files/large.gif')
         self.baddieImage = pygame.image.load('files/baddie.jpg')
         self.destinyImage = pygame.image.load('files/destiny.png')
@@ -294,7 +301,7 @@ class game():
         self.critic_loss = advantage.pow(2).mean()
         
         
-        return  self.actor_loss, self.critic_loss
+        return  self.actor_loss, self.critic_loss, advantage.detach()
         
             
 if __name__ == '__main__':
