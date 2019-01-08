@@ -1,3 +1,6 @@
+
+from torchvision import transforms
+
 import main
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -11,7 +14,7 @@ import math
 
 class game():
     
-    def __init__(self, actor, critic, transform, level):
+    def __init__(self, actor, critic, level):
         #self.BARRIERRADIUS = 0.06
         #self.ROBOTRADIUS = 0.15
         #self.W = 2 * self.ROBOTRADIUS
@@ -21,15 +24,24 @@ class game():
         #self.x = PLAYFIELDCORNERS[0] - 0.5
         #self.y = 0.0
         
-        
+        state_size = 25
         self.level = level
         self.actor = actor
         self.critic = critic
-        self.transform = transform
+        self.transform = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.Resize(state_size),
+            transforms.Grayscale(num_output_channels=1),
+            transforms.ToTensor(),
+                ])
         self.playerImage = pygame.image.load('files/large.gif')
         self.baddieImage = pygame.image.load('files/baddie.jpg')
         self.destinyImage = pygame.image.load('files/destiny.png')
         self.playerRect = self.playerImage.get_rect()
+        self.playerRect.x = 500
+        self.playerRect.y = 500
+        
+        #print('player ', self.playerRect)
         self.winW = 600
         self.winH = 600
         self.bgColor = (0, 0, 0)
@@ -142,6 +154,8 @@ class game():
         
 
     def getState(self):
+        self.mainClock.tick(self.FPS)
+        
         state = pygame.surfarray.array3d(pygame.display.get_surface())
         #if (random.randint(0,100) == 2):
             #plt.imshow(state)
@@ -150,6 +164,7 @@ class game():
         state = np.ascontiguousarray(state, dtype=np.float32) 
         state = torch.from_numpy(state)
         state = self.transform(state).unsqueeze(0)
+        
         #plt.imshow(state)
         #plt.show()
         return state
@@ -276,13 +291,20 @@ class game():
         return returns
 
 
-    def step(self):
+    def step(self, action):
         reward = -1
         done = 0
         epsilon = 1e-1#random.uniform(0,1)
-        self.playerRect.x += ((self.angle) + epsilon) #* (self.playerMoveRate + epsilon)#(math.sin(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
-        self.playerRect.y -=  (self.playerMoveRate + epsilon)#(math.cos(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
-
+        #print(action)
+        self.angle = action[0]
+        self.playerMoveRate =  action[1]
+        #action[0]  = action[0] *10
+        #action[1]  = action[1] *10
+        print(self.angle)
+        print(self.playerMoveRate)
+        self.playerRect.x += (1/(self.angle) + epsilon) #* (self.playerMoveRate + epsilon)#(math.sin(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
+        self.playerRect.y +=  (1/self.playerMoveRate + epsilon)#(math.cos(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
+        #print(self.playerRect.x)
         #print(self.playerRect.y)
         #print(math.cos(self.angle) + epsilon * self.playerMoveRate + epsilon)
         #print((math.sin(self.angle) + epsilon * self.playerMoveRate + epsilon))
@@ -302,13 +324,14 @@ class game():
         if self.playerHasRichDestiny():
              reward = +1000
              done = 1
-        
-        return done, reward
+        n_s = self.getState()
+        self.updateDisplay()  
+        return n_s, reward, done, 'info'
 
     def updateDisplay(self):
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                self.terminate()
+        #for event in pygame.event.get():
+        #    if event.type == QUIT:
+        #        self.terminate()
         for b in self.baddies:
            b['rect'].move_ip(0, b['speed'])
         self.windowSurface.fill(self.bgColor)        
@@ -375,7 +398,7 @@ class game():
               self.playerRect.left < 0):
                 break
             self.updateDisplay()
-                              
+                
             self.mainClock.tick(self.FPS)
         self.terminate()
         
@@ -389,7 +412,6 @@ class game():
 
         self.actor_loss = -(advantage.detach()).mean()
         self.critic_loss = advantage.pow(2).mean()
-        
         
         return  self.actor_loss, self.critic_loss
         

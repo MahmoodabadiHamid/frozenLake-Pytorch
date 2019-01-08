@@ -1,4 +1,8 @@
-import gym, os
+import pygame
+from torch.autograd import Variable
+from torchvision import transforms
+import gameEnv
+import os
 from itertools import count
 import torch
 import torch.nn as nn
@@ -8,11 +12,53 @@ from torch.distributions import Categorical
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-env = gym.make("CartPole-v0").unwrapped
+#env = gym.make("CartPole-v0").unwrapped
 
-state_size = env.observation_space.shape[0]
-action_size = env.action_space.n
-lr = 0.0001
+state_size = 12*12#env.observation_space.shape[0]
+action_size = 2#env.action_space.n
+lr = 0.1e-3
+
+
+class Convolution(nn.Module):
+    def __init__(self):
+        super(Convolution, self).__init__()
+        #_____________ Starting CNN Layer ___________________________
+        
+        self.layer1 = nn.Sequential(
+                nn.Conv2d(1, 1, kernel_size=5, padding=2),
+                #nn.BatchNorm2d(1),
+                #nn.ReLU(),
+                nn.MaxPool2d(2))
+
+        self.layer2 = nn.Sequential(
+                nn.Conv2d(1, 1, kernel_size=5, padding=2),
+                #nn.BatchNorm2d(1),
+                #nn.ReLU(),
+                nn.MaxPool2d(2))
+
+        self.layer3 = nn.Sequential(
+                nn.Conv2d(1, 1, kernel_size=5, padding=2),
+                #nn.BatchNorm2d(1),
+                #nn.ReLU(),
+                nn.MaxPool2d(2))
+
+        self.layer4 = nn.Sequential(
+                nn.Conv2d(1, 1, kernel_size=5, padding=2),
+                #nn.BatchNorm2d(1),
+                #nn.ReLU(),
+                nn.MaxPool2d(2))
+        
+        #_____________ End of CNN Layer ___________________________
+    def forward(self, state):
+        
+        #state = self.transform(state.squeeze())
+        #print('here')
+        conv1 = self.layer1(state)
+        conv2 = self.layer2(state)
+        conv3 = self.layer3(state)
+        conv4 = self.layer4(state)
+        state = conv4.view(1, -1)
+        return state
 
 class Actor(nn.Module):
     def __init__(self, state_size, action_size):
@@ -24,11 +70,17 @@ class Actor(nn.Module):
         self.linear3 = nn.Linear(256, self.action_size)
 
     def forward(self, state):
+        
         output = F.relu(self.linear1(state))
+        
         output = F.relu(self.linear2(output))
         output = self.linear3(output)
-        distribution = Categorical(F.softmax(output, dim=-1))
-        return distribution
+        #distribution = Categorical(F.softmax(output, dim=-1))
+        #print(distribution)
+        #input()
+        #return distribution
+        
+        return output
 
 
 class Critic(nn.Module):
@@ -36,6 +88,7 @@ class Critic(nn.Module):
         super(Critic, self).__init__()
         self.state_size = state_size
         self.action_size = action_size
+        
         self.linear1 = nn.Linear(self.state_size, 128)
         self.linear2 = nn.Linear(128, 256)
         self.linear3 = nn.Linear(256, 1)
@@ -56,54 +109,77 @@ def compute_returns(next_value, rewards, masks, gamma=0.99):
     return returns
 
 
-def trainIters(actor, critic, n_iters):
+def main(actor, critic, convolution, env, n_iters):
     optimizerA = optim.Adam(actor.parameters())
     optimizerC = optim.Adam(critic.parameters())
     for iter in range(n_iters):
-        state = env.reset()
+        #state = (env.getState())
         log_probs = []
         values = []
         rewards = []
         masks = []
-        entropy = 0
-        env.reset()
+        #entropy = 0
+        #env.reset()
 
-        for i in count():
-            env.render()
-            state = torch.FloatTensor(state).to(device)
-            dist, value = actor(state), critic(state)
+        #for i in count():
+        while True:
+            state = (env.getState())
+            #env.render()
+            
+            state = convolution(state)
+            state = (torch.FloatTensor(state).to(device))
+            #state = np.reshape()
 
-            action = dist.sample()
-            next_state, reward, done, _ = env.step(action.cpu().numpy())
+            
+            action, value = actor(state), critic(state)
+            print(actor(state))
+            #action = dist.sample()
+            #print(action)
+            #input() 
+            next_state, reward, done, _ = env.step(action[0].detach().numpy())
 
-            log_prob = dist.log_prob(action).unsqueeze(0)
-            entropy += dist.entropy().mean()
 
-            log_probs.append(log_prob)
+            #print(reward)
+            #input()
+            if (done):
+                env.terminate()
+                break
+                #print('hi')
+                
             values.append(value)
             rewards.append(torch.tensor([reward], dtype=torch.float, device=device))
             masks.append(torch.tensor([1-done], dtype=torch.float, device=device))
 
             state = next_state
 
-            if done:
-                print('Iteration: {}, Score: {}'.format(iter, i))
+            #if done:
+                #print('Iteration: {}, Score: {}'.format(iter, i))
+                #break
+            env.updateDisplay()
+                              
+            env.mainClock.tick(env.FPS)
+            if (env.playerHasHitBaddie()       or
+              env.playerRect.top > env.winH   or
+              env.playerRect.top < 0           or
+              env.playerRect.left > env.winW  or
+              env.playerRect.left < 0):
                 break
-
-
-        next_state = torch.FloatTensor(next_state).to(device)
+        next_state = torch.FloatTensor(convolution(next_state)).to(device)
         next_value = critic(next_state)
         returns = compute_returns(next_value, rewards, masks)
 
-        log_probs = torch.cat(log_probs)
+        #log_probs = torch.cat(log_probs)
         returns = torch.cat(returns).detach()
         values = torch.cat(values)
 
         advantage = returns - values
 
-        actor_loss = -(log_probs * advantage.detach()).mean()
+        actor_loss = -( advantage.detach()).mean()
         critic_loss = advantage.pow(2).mean()
 
+        actor_loss = Variable(actor_loss , requires_grad = True)
+        critic_loss = Variable(critic_loss , requires_grad = True)
+        
         optimizerA.zero_grad()
         optimizerC.zero_grad()
         actor_loss.backward()
@@ -126,4 +202,7 @@ if __name__ == '__main__':
         print('Critic Model loaded')
     else:
         critic = Critic(state_size, action_size).to(device)
-    trainIters(actor, critic, n_iters=100)
+    convolution = Convolution()
+    env =  gameEnv.game(actor, critic, level = 'EASY')
+    #pygame.init()
+    main(actor, critic, convolution, env, n_iters=100)
