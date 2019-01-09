@@ -11,11 +11,11 @@ import torch.nn.functional as F
 from torch.distributions import Categorical
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+#device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #env = gym.make("CartPole-v0").unwrapped
 
 state_size = 12*12#env.observation_space.shape[0]
-action_size = 2#env.action_space.n
+action_size = 1#env.action_space.n
 lr = 0.1e-3
 
 
@@ -72,15 +72,10 @@ class Actor(nn.Module):
     def forward(self, state):
         
         output = F.relu(self.linear1(state))
-        
         output = F.relu(self.linear2(output))
         output = self.linear3(output)
-        #distribution = Categorical(F.softmax(output, dim=-1))
-        #print(distribution)
-        #input()
-        #return distribution
-        
-        return output
+        distribution = Categorical(F.softmax(output, dim=-1))
+        return distribution
 
 
 class Critic(nn.Module):
@@ -130,11 +125,17 @@ def main(actor, critic, convolution, env, n_iters):
             #env.render()
             
             state = convolution(state)
-            state = (torch.FloatTensor(state).to(device))
+            state = (torch.FloatTensor(state))#.to(device))
             #state = np.reshape()
 
             
-            action, value = actor(state), critic(state)
+            dist, value = actor(state), critic(state)
+            action = dist.sample()
+            
+            #print('dsf ',dist.log_prob(action).unsqueeze(0))
+            log_prob = dist.log_prob(action).unsqueeze(0)
+            log_probs.append(log_prob )
+            
             #print(actor(state))
             #action = dist.sample()
             #print(action)
@@ -150,11 +151,11 @@ def main(actor, critic, convolution, env, n_iters):
                 #print('hi')
                 
             values.append(value)
-            rewards.append(torch.tensor([reward], dtype=torch.float, device=device))
-            masks.append(torch.tensor([1-done], dtype=torch.float, device=device))
+            rewards.append(torch.tensor([reward], dtype=torch.float))#, device=device))
+            masks.append(torch.tensor([1-done], dtype=torch.float))#, device=device))
 
             state = next_state
-
+            #print(state)
             #if done:
                 #print('Iteration: {}, Score: {}'.format(iter, i))
                 #break
@@ -167,32 +168,43 @@ def main(actor, critic, convolution, env, n_iters):
               env.playerRect.left > env.winW  or
               env.playerRect.left < 0):
                 break
-        next_state = torch.FloatTensor(convolution(next_state)).to(device)
+        next_state = torch.FloatTensor(convolution(next_state))#.to(device)
         next_value = critic(next_state)
         returns = compute_returns(next_value, rewards, masks)
 
-        #log_probs = torch.cat(log_probs)
+        log_probs = torch.cat(log_probs)
         returns = torch.cat(returns).detach()
         values = torch.cat(values)
-
+        
         advantage = returns - values
-
-        actor_loss = -( advantage.detach()).mean()
+        print(log_probs)
+        actor_loss = -(log_probs[:len(advantage)] * advantage.detach()).mean()
         critic_loss = advantage.pow(2).mean()
-
-        actor_loss = Variable(actor_loss , requires_grad = True)
-        critic_loss = Variable(critic_loss , requires_grad = True)
+        print('advantage ',advantage)
+        #print('actorloss', actor_loss)
+        #input()
+        #actor_loss = Variable(actor_loss , requires_grad = True)
+        #critic_loss = Variable(critic_loss , requires_grad = True)
+        #grad_fn=<NegBackward>
+        #actor_loss = torch.tensor(actor_loss, requires_grad=True)
+        #critic_loss = torch.tensor(critic_loss, requires_grad=True)
         
         optimizerA.zero_grad()
         optimizerC.zero_grad()
-        actor_loss.backward()
-        critic_loss.backward()
+        actor_loss.backward(retain_graph=True)
+        critic_loss.backward(retain_graph=True)
         optimizerA.step()
         optimizerC.step()
         env =  gameEnv.game(actor, critic, level = 'EASY')
         
-    torch.save(actor, 'model/actor.pkl')
-    torch.save(critic, 'model/critic.pkl')
+        torch.save(actor, 'actor.pkl')
+        torch.save(critic, 'critic.pkl')
+        for param in actor.parameters():
+            print(param)
+        input()
+        for param in actor.parameters():
+            print(param.grad)
+        input()
     env.close()
 
 
@@ -201,13 +213,13 @@ if __name__ == '__main__':
         actor = torch.load('model/actor.pkl')
         print('Actor Model loaded')
     else:
-        actor = Actor(state_size, action_size).to(device)
+        actor = Actor(state_size, action_size)#.to(device)
     if os.path.exists('model/critic.pkl'):
         critic = torch.load('model/critic.pkl')
         print('Critic Model loaded')
     else:
-        critic = Critic(state_size, action_size).to(device)
+        critic = Critic(state_size, action_size)#.to(device)
     convolution = Convolution()
     env =  gameEnv.game(actor, critic, level = 'EASY')
     #pygame.init()
-    main(actor, critic, convolution, env, n_iters=100)
+    main(actor, critic, convolution, env, n_iters=3)
