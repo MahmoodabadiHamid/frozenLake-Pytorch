@@ -114,6 +114,7 @@ def main(actor, critic, convolution, env, n_iters):
     optimizerC = optim.Adam(critic.parameters())
     for iter in range(n_iters):
         #state = (env.getState())
+        
         log_probs = []
         values = []
         rewards = []
@@ -122,8 +123,10 @@ def main(actor, critic, convolution, env, n_iters):
         #env.reset()
 
         #for i in count():
-        while True:
+        while True :
+            
             state = (env.getState())
+            
             #env.render()
             
             state = convolution(state)
@@ -132,7 +135,7 @@ def main(actor, critic, convolution, env, n_iters):
 
             
             action, value = actor(state), critic(state)
-            print(actor(state))
+            #print(actor(state))
             #action = dist.sample()
             #print(action)
             #input() 
@@ -186,6 +189,8 @@ def main(actor, critic, convolution, env, n_iters):
         critic_loss.backward()
         optimizerA.step()
         optimizerC.step()
+        env =  gameEnv.game(actor, critic, level = 'EASY')
+        
     torch.save(actor, 'model/actor.pkl')
     torch.save(critic, 'model/critic.pkl')
     env.close()

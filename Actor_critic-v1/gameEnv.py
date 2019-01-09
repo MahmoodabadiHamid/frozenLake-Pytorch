@@ -69,14 +69,16 @@ class game():
                 [437, 396, 31, 31],
                 [196, 449, 28, 28],
                 [249, 363, 21, 21],
-                [460, 592, 30, 30],
+                [400, 482, 50, 50],
+                [500, 402, 50, 50],
+                
                 [110, 583, 27, 27],
                 [428, 111, 31, 31],
                 [207, 281, 32, 32],
                 [370, 162, 22, 22],
                 [386, 333, 25, 25],
                 [256, 171, 29, 29],
-                [400, 500, 89, 69],
+                [400, 400, 100, 100],
                 ]
             
             
@@ -297,21 +299,15 @@ class game():
         done = 0
         epsilon = 4#random.uniform(0,1)
         #print(action)
-        self.angle = action[0]
-        self.playerMoveRate =  action[1]
+        self.angle = (1/(action[0]*10))
+        self.playerMoveRate =  (1/(action[1]*10))
+        
         #action[0]  = action[0] *10
         #action[1]  = action[1] *10
         print(self.angle)
         print(self.playerMoveRate)
         self.playerRect.x += (self.angle * epsilon) #* (self.playerMoveRate + epsilon)#(math.sin(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
         self.playerRect.y +=  (self.playerMoveRate * epsilon)#(math.cos(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
-        #print(self.playerRect.x)
-        #print(self.playerRect.y)
-        #print(math.cos(self.angle) + epsilon * self.playerMoveRate + epsilon)
-        #print((math.sin(self.angle) + epsilon * self.playerMoveRate + epsilon))
-        #print(self.angle)
-        #print()
-        #print()
         
         #self.playerRect.move_ip(math.sin(self.angle) * self.playerMoveRate,0)
         #self.playerRect.move_ip(0, math.cos(self.angle)* self.playerMoveRate)
