@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-from torch.distributions import Categorical
+from torch.distributions import Normal
 
 
 #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -74,7 +74,7 @@ class Actor(nn.Module):
         output = F.relu(self.linear1(state))
         output = F.relu(self.linear2(output))
         output = self.linear3(output)
-        distribution = Categorical(F.softmax(output, dim=-1))
+        distribution = Normal(torch.Tensor([0.0]),torch.Tensor([1.0]))
         return distribution
 
 
