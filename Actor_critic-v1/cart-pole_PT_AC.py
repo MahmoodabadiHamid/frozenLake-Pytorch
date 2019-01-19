@@ -225,7 +225,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
         advantage = returns - values
         
         actor_distance_loss = -(log_probs_distance* advantage.detach()).mean()
-        print("log prob",log_probs_angle)
+        #print("log prob",log_probs_angle)
         #print("advantage",advantage.detach())
         actor_angle_loss = -(log_probs_angle * advantage.detach()).mean()
         critic_loss = advantage.pow(2).mean()
