@@ -253,7 +253,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
         torch.save(actor_angle, 'actor.pkl')
         torch.save(critic, 'critic.pkl')
         print(critic_loss)
-        #for param in actor.parameters():
+        #for param in actor_angle.parameters():
         #    print(param)
         #input()
         #for param in actor.parameters():
