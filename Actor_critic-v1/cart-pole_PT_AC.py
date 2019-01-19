@@ -1,3 +1,4 @@
+import numpy as np
 import pygame
 from torch.autograd import Variable
 from torchvision import transforms
@@ -15,7 +16,7 @@ from torch.distributions import Normal
 #env = gym.make("CartPole-v0").unwrapped
 
 state_size = 12*12#env.observation_space.shape[0]
-action_size = 1#env.action_space.n
+action_size = 2#env.action_space.n
 lr = 0.1e-3
 
 
@@ -73,9 +74,17 @@ class Actor(nn.Module):
         
         output = F.relu(self.linear1(state))
         output = F.relu(self.linear2(output))
-        output = self.linear3(output)
-        distribution = Normal(torch.Tensor([0.0]),torch.Tensor([1.0]))
-        return distribution
+        output = self.linear3(output)[0]
+        
+        mu = output[0]
+        sigma = output[1]
+        
+        #print('aaa')
+        #input(output)
+        #distribution_distance = torch.normal(mu1, sigma1)
+        #distribution_angle = torch.normal(mu2, sigma2)
+        #distribution = Normal(torch.Tensor([0.0]),torch.Tensor([1.0]))
+        return mu, sigma #distribution_distance, distribution_angle
 
 
 class Critic(nn.Module):
@@ -104,13 +113,15 @@ def compute_returns(next_value, rewards, masks, gamma=0.99):
     return returns
 
 
-def main(actor, critic, convolution, env, n_iters):
-    optimizerA = optim.Adam(actor.parameters())
+def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
+    optimizerActorDistance = optim.Adam(actor_distance.parameters())
+    optimizerActorAngle = optim.Adam(actor_angle.parameters())
     optimizerC = optim.Adam(critic.parameters())
     for iter in range(n_iters):
         #state = (env.getState())
         
-        log_probs = []
+        log_probs_distance = []
+        log_probs_angle = []
         values = []
         rewards = []
         masks = []
@@ -118,6 +129,7 @@ def main(actor, critic, convolution, env, n_iters):
         #env.reset()
 
         #for i in count():
+        cum_reward = 0
         while True :
             
             state = (env.getState())
@@ -129,21 +141,41 @@ def main(actor, critic, convolution, env, n_iters):
             #state = np.reshape()
 
             
-            dist, value = actor(state), critic(state)
-            action = dist.sample()
+            mu1,sigma1 = actor_distance(state)
+            mu2,sigma2 = actor_angle(state)
+            
+            value = critic(state)
+            #action = dist.sample()
             
             #print('dsf ',dist.log_prob(action).unsqueeze(0))
-            log_prob = dist.log_prob(action).unsqueeze(0)
-            log_probs.append(log_prob )
+            normal_dist_distance = Normal(mu1, sigma1)
+            normal_dist_angle = Normal(mu2, sigma2)
+
+            distance = normal_dist_distance.sample()
+            angle    = normal_dist_angle.sample()
             
-            #print(actor(state))
-            #action = dist.sample()
-            #print(action)
-            #input() 
-            next_state, reward, done, _ = env.step(action[0].detach().numpy())
 
+            #log_prob_distance = torch.log(torch.pow( torch.sqrt(2. * sigma1 * np.pi) , -1)) - (normal_dist_distance - mu1)*(normal_dist_distance - mu1)*torch.pow((2. * sigma1), -1)
+            log_prob_distance = normal_dist_distance.log_prob(distance).unsqueeze(0)
+            log_prob_angle = normal_dist_angle.log_prob(angle).unsqueeze(0)
 
-            #print(reward)
+            #log_prob_angle = torch.log(torch.pow( torch.sqrt(2. * sigma2 * np.pi) , -1)) - (normal_dist_distance - mu2)*(normal_dist_angle - mu2)*torch.pow((2. * sigma2), -1)
+
+            entropy_distance = 0.5 * (torch.log(2. * np.pi * sigma1 ) + 1.)
+            entropy_angle = 0.5 * (torch.log(2. * np.pi * sigma2 ) + 1.)
+            
+
+            log_prob_distance = log_prob_distance
+            log_prob_angle = log_prob_angle
+            
+            log_probs_distance.append(log_prob_distance )
+            log_probs_angle.append(log_prob_angle )
+            
+            
+            next_state, reward, done, _ = env.step(distance, angle)
+
+            cum_reward += reward
+            #print(cum_reward)
             #input()
             if (done):
                 env.terminate()
@@ -168,19 +200,28 @@ def main(actor, critic, convolution, env, n_iters):
               env.playerRect.left > env.winW  or
               env.playerRect.left < 0):
                 break
+        print('cum_reward: ', cum_reward)
+        cum_reward = 0
         next_state = torch.FloatTensor(convolution(next_state))#.to(device)
         next_value = critic(next_state)
         returns = compute_returns(next_value, rewards, masks)
+        #log_probs = torch.tensor(log_probs)
+        #print(log_probs)
+        #print(len(log_probs))
+        #input()
 
-        log_probs = torch.cat(log_probs)
+        log_probs_distance = torch.cat(log_probs_distance)
+        log_probs_angle = torch.cat(log_probs_angle)
+        
         returns = torch.cat(returns).detach()
         values = torch.cat(values)
         
         advantage = returns - values
-        print(log_probs)
-        actor_loss = -(log_probs[:len(advantage)] * advantage.detach()).mean()
+        
+        actor_distance_loss = -(log_probs_distance[:len(advantage)] * advantage.detach()).mean()
+        actor_angle_loss = -(log_probs_angle[:len(advantage)] * advantage.detach()).mean()
         critic_loss = advantage.pow(2).mean()
-        print('advantage ',advantage)
+
         #print('actorloss', actor_loss)
         #input()
         #actor_loss = Variable(actor_loss , requires_grad = True)
@@ -189,23 +230,29 @@ def main(actor, critic, convolution, env, n_iters):
         #actor_loss = torch.tensor(actor_loss, requires_grad=True)
         #critic_loss = torch.tensor(critic_loss, requires_grad=True)
         
-        optimizerA.zero_grad()
+        optimizerActorDistance.zero_grad()
+        optimizerActorAngle.zero_grad()
         optimizerC.zero_grad()
-        actor_loss.backward(retain_graph=True)
-        critic_loss.backward(retain_graph=True)
-        optimizerA.step()
-        optimizerC.step()
-        env =  gameEnv.game(actor, critic, level = 'EASY')
         
-        torch.save(actor, 'actor.pkl')
+        actor_distance_loss.backward(retain_graph=True)
+        actor_angle_loss.backward(retain_graph=True)
+        
+        critic_loss.backward(retain_graph=True)
+        optimizerActorDistance.step()
+        optimizerActorAngle.step()
+        optimizerC.step()
+        env =  gameEnv.game(actor_distance, actor_angle, critic, level = 'EASY')
+        
+        torch.save(actor_distance, 'actor.pkl')
+        torch.save(actor_angle, 'actor.pkl')
         torch.save(critic, 'critic.pkl')
-        for param in actor.parameters():
-            print(param)
-        input()
-        for param in actor.parameters():
-            print(param.grad)
-        input()
-    env.close()
+        #for param in actor.parameters():
+        #    print(param)
+        #input()
+        #for param in actor.parameters():
+        #    print(param.grad)
+        #input()
+    #env.close()
 
 
 if __name__ == '__main__':
@@ -213,13 +260,14 @@ if __name__ == '__main__':
         actor = torch.load('model/actor.pkl')
         print('Actor Model loaded')
     else:
-        actor = Actor(state_size, action_size)#.to(device)
+        actor_distance = Actor(state_size, action_size)#.to(device)
+        actor_angle = Actor(state_size, action_size)#.to(device)
     if os.path.exists('model/critic.pkl'):
         critic = torch.load('model/critic.pkl')
         print('Critic Model loaded')
     else:
         critic = Critic(state_size, action_size)#.to(device)
     convolution = Convolution()
-    env =  gameEnv.game(actor, critic, level = 'EASY')
+    env =  gameEnv.game(actor_distance, actor_angle, critic, level = 'EASY')
     #pygame.init()
-    main(actor, critic, convolution, env, n_iters=3)
+    main(actor_distance, actor_angle, critic, convolution, env, n_iters=20)

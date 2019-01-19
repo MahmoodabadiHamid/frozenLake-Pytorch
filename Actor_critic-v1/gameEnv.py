@@ -14,7 +14,7 @@ import math
 
 class game():
     
-    def __init__(self, actor, critic, level):
+    def __init__(self, actor_distance, actor_angle, critic, level):
         #self.BARRIERRADIUS = 0.06
         #self.ROBOTRADIUS = 0.15
         #self.W = 2 * self.ROBOTRADIUS
@@ -26,7 +26,8 @@ class game():
         
         state_size = 25
         self.level = level
-        self.actor = actor
+        self.actor_distance = actor_distance
+        self.actor_angle = actor_angle
         self.critic = critic
         self.transform = transforms.Compose([
             transforms.ToPILImage(),
@@ -294,13 +295,13 @@ class game():
         return returns
 
 
-    def step(self, action):
+    def step(self, distance, angle):
         reward = -1
         done = 0
         epsilon = 4#random.uniform(0,1)
         #print(action)
-        self.angle = (1/((action+epsilon)*10))
-        self.playerMoveRate =  1#(1/(action[1]*10))
+        self.angle = angle #(1/((action+epsilon)*10))
+        self.playerMoveRate =  distance #(1/(action[1]*10))
         
         #print(self.angle)
         #print(self.playerMoveRate)
