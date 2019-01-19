@@ -271,6 +271,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
 
 
 if __name__ == '__main__':
+    print('version 2')
     if os.path.exists('model/actor.pkl'):
         actor = torch.load('model/actor.pkl')
         print('Actor Model loaded')
@@ -287,3 +288,4 @@ if __name__ == '__main__':
     #pygame.init()
     n_iters = input('number of iteration? ')
     main(actor_distance, actor_angle, critic, convolution, env, int(n_iters))
+
