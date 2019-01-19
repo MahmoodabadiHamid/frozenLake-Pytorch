@@ -224,8 +224,10 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
         
         advantage = returns - values
         
-        actor_distance_loss = -(log_probs_distance[:len(advantage)] * advantage.detach()).mean()
-        actor_angle_loss = -(log_probs_angle[:len(advantage)] * advantage.detach()).mean()
+        actor_distance_loss = -(log_probs_distance* advantage.detach()).mean()
+        print("log prob",log_probs_angle)
+        #print("advantage",advantage.detach())
+        actor_angle_loss = -(log_probs_angle * advantage.detach()).mean()
         critic_loss = advantage.pow(2).mean()
 
         #print('actorloss', actor_loss)
@@ -252,14 +254,17 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
         torch.save(actor_distance, 'actor.pkl')
         torch.save(actor_angle, 'actor.pkl')
         torch.save(critic, 'critic.pkl')
+        
         print(critic_loss)
+        print(actor_distance_loss)
+        print(actor_angle_loss)
         #for param in actor_angle.parameters():
         #    print(param)
         #input()
-        #for param in actor.parameters():
+        #for param in actor_distance.parameters():
         #    print(param.grad)
         #input()
-    print(len(cum_rewards))
+    #print(len(cum_rewards))
     plt.plot(list(range(0, len(cum_rewards))),cum_rewards)
     plt.show()
     #env.close()
