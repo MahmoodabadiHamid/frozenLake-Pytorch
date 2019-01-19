@@ -280,4 +280,5 @@ if __name__ == '__main__':
     convolution = Convolution()
     env =  gameEnv.game(actor_distance, actor_angle, critic, level = 'EASY')
     #pygame.init()
-    main(actor_distance, actor_angle, critic, convolution, env, n_iters=3)
+    n_iters = input('number of iteration? ')
+    main(actor_distance, actor_angle, critic, convolution, env, int(n_iters))
