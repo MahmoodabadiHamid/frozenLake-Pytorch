@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pygame
 from torch.autograd import Variable
@@ -117,7 +118,9 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
     optimizerActorDistance = optim.Adam(actor_distance.parameters())
     optimizerActorAngle = optim.Adam(actor_angle.parameters())
     optimizerC = optim.Adam(critic.parameters())
-    for iter in range(n_iters):
+    cum_rewards = []
+        
+    for i in range(n_iters):
         #state = (env.getState())
         
         log_probs_distance = []
@@ -201,7 +204,10 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
               env.playerRect.left < 0):
                 break
         print('cum_reward: ', cum_reward)
+        cum_rewards.append(cum_reward)
         cum_reward = 0
+        
+        
         next_state = torch.FloatTensor(convolution(next_state))#.to(device)
         next_value = critic(next_state)
         returns = compute_returns(next_value, rewards, masks)
@@ -246,12 +252,16 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
         torch.save(actor_distance, 'actor.pkl')
         torch.save(actor_angle, 'actor.pkl')
         torch.save(critic, 'critic.pkl')
+        print(critic_loss)
         #for param in actor.parameters():
         #    print(param)
         #input()
         #for param in actor.parameters():
         #    print(param.grad)
         #input()
+    print(len(cum_rewards))
+    plt.plot(list(range(0, len(cum_rewards))),cum_rewards)
+    plt.show()
     #env.close()
 
 
@@ -270,4 +280,4 @@ if __name__ == '__main__':
     convolution = Convolution()
     env =  gameEnv.game(actor_distance, actor_angle, critic, level = 'EASY')
     #pygame.init()
-    main(actor_distance, actor_angle, critic, convolution, env, n_iters=20)
+    main(actor_distance, actor_angle, critic, convolution, env, n_iters=3)
