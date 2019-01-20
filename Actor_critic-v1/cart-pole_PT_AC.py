@@ -296,7 +296,7 @@ if __name__ == '__main__':
         critic = Critic(state_size, action_size=1)#.to(device)
         print('Critic Model created')
     if os.path.exists(str(path)+'convolution.pkl'):
-        critic = torch.load(str(path)+'convolution.pkl')
+        convolution = torch.load(str(path)+'convolution.pkl')
         print('convolution Model loaded')
     else:
         convolution = Convolution()
