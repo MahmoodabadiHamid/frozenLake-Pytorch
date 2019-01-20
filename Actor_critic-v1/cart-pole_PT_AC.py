@@ -251,9 +251,11 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
         optimizerC.step()
         env =  gameEnv.game(actor_distance, actor_angle, critic, level = 'EASY')
         
-        torch.save(actor_distance, 'actor.pkl')
-        torch.save(actor_angle, 'actor.pkl')
-        torch.save(critic, 'critic.pkl')
+        torch.save(actor_distance, str(path)+'actor_distance.pkl')
+        torch.save(actor_angle, str(path)+'actor_angle.pkl')
+        torch.save(critic, str(path)+'critic.pkl')
+        torch.save(convolution, str(path)+'convolution.pkl')
+        
         
         print(critic_loss)
         print(actor_distance_loss)
@@ -272,18 +274,34 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
 
 if __name__ == '__main__':
     print('version 2')
-    if os.path.exists('model/actor.pkl'):
-        actor = torch.load('model/actor.pkl')
-        print('Actor Model loaded')
+    path = input('input path: ')
+    if os.path.exists(str(path)+'actor_distance.pkl'):
+        actor_distance = torch.load(str(path)+'actor_distance.pkl')
+        print('actor_distance Model loaded')
     else:
         actor_distance = Actor(state_size, action_size)#.to(device)
+        print('actor_distance Model created')
+        
+    if os.path.exists(str(path)+'actor_angle.pkl'):
+        actor_angle = torch.load(str(path)+'actor_angle.pkl')
+        print('actor_angle Model loaded')
+    else:
         actor_angle = Actor(state_size, action_size)#.to(device)
-    if os.path.exists('model/critic.pkl'):
-        critic = torch.load('model/critic.pkl')
+        print('actor_angle Model created')
+        
+    if os.path.exists(str(path)+'critic.pkl'):
+        critic = torch.load(str(path)+'critic.pkl')
         print('Critic Model loaded')
     else:
-        critic = Critic(state_size, action_size)#.to(device)
-    convolution = Convolution()
+        critic = Critic(state_size, action_size=1)#.to(device)
+        print('Critic Model created')
+    if os.path.exists(str(path)+'convolution.pkl'):
+        critic = torch.load(str(path)+'convolution.pkl')
+        print('convolution Model loaded')
+    else:
+        convolution = Convolution()
+        print('convolution Model created')
+    
     env =  gameEnv.game(actor_distance, actor_angle, critic, level = 'EASY')
     #pygame.init()
     n_iters = input('number of iteration? ')

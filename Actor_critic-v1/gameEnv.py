@@ -35,7 +35,7 @@ class game():
             transforms.Grayscale(num_output_channels=1),
             transforms.ToTensor(),
                 ])
-        self.playerImage = pygame.image.load('files/large.gif')
+        self.playerImage = pygame.transform.scale(pygame.image.load('files/large.gif'),(20,20))                 
         self.baddieImage = pygame.image.load('files/baddie.jpg')
         self.destinyImage = pygame.image.load('files/destiny.png')
         self.playerRect = self.playerImage.get_rect()
