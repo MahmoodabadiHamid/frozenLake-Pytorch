@@ -1,3 +1,4 @@
+import rrt
 import matplotlib.pyplot as plt
 import numpy as np
 import pygame
@@ -274,7 +275,10 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
 
 if __name__ == '__main__':
     print('version 2')
-    path = input('input path: ')
+    path = ''#input('input path: ')
+    NUM_OF_RRT_ITER = 2
+    NUM_OF_RRT_EPOCH = 10
+    
     if os.path.exists(str(path)+'actor_distance.pkl'):
         actor_distance = torch.load(str(path)+'actor_distance.pkl')
         print('actor_distance Model loaded')
@@ -303,7 +307,11 @@ if __name__ == '__main__':
         print('convolution Model created')
     
     env =  gameEnv.game(actor_distance, actor_angle, critic, level = 'EASY')
-    #pygame.init()
+    
+    for _ in range(NUM_OF_RRT_ITER):
+        rrt_obj = rrt.RRT(env, actor_distance, actor_angle, convolution)
+        actor_distance, actor_angle, convolution = rrt_obj.runRRT(NUM_OF_RRT_EPOCH)
+
     n_iters = input('number of iteration? ')
     main(actor_distance, actor_angle, critic, convolution, env, int(n_iters))
 

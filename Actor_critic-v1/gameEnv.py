@@ -191,7 +191,7 @@ class game():
                 return True
         return False
 
-    def playerHasHitBaddie(self, rect):
+    def nodeHasHitBaddie(self, rect):
         for b in self.baddies:
             if rect.colliderect(b['rect']):
                 return True
@@ -202,7 +202,7 @@ class game():
              if self.playerRect.colliderect(d['rect']):
                  return True
          return False
-    def playerHasRichDestiny(self, rect):
+    def nodeHasRichDestiny(self, rect):
          for d in self.destiny:
              if rect.colliderect(d['rect']):
                  return True
