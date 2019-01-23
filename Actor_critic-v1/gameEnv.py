@@ -1,6 +1,4 @@
-
 from torchvision import transforms
-
 import main
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -46,7 +44,7 @@ class game():
         self.winW = 600
         self.winH = 600
         self.bgColor = (0, 0, 0)
-        self.FPS = 5000
+        self.FPS = 10
         self.obstacleMinSiz = 20
         self.obstacleMaxSiz = 40
         self.destinyMinSiz = 60

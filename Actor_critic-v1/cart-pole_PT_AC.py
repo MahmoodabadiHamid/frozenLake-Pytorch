@@ -276,7 +276,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
 if __name__ == '__main__':
     print('version 2')
     path = ''#input('input path: ')
-    NUM_OF_RRT_ITER = 2
+    NUM_OF_RRT_ITER = 3
     NUM_OF_RRT_EPOCH = 10
     
     if os.path.exists(str(path)+'actor_distance.pkl'):
@@ -293,7 +293,7 @@ if __name__ == '__main__':
         actor_angle = Actor(state_size, action_size)#.to(device)
         print('actor_angle Model created')
         
-    if os.path.exists(str(path)+'critic.pkl'):
+    if os.path.exists(str(path)+'critic.pkl'): 
         critic = torch.load(str(path)+'critic.pkl')
         print('Critic Model loaded')
     else:

@@ -1,7 +1,12 @@
-import pygame, os, math, time, random
+import torch.nn as nn
+import torch.optim as optim
+import pygame, os, math, time, random, numpy, torch
 from pygame.locals import *
 import anytree
 import gameEnv
+
+
+
 
 class RRT():
     def __init__(self, game, actor_distance, actor_angle, convolution):
@@ -89,9 +94,41 @@ class RRT():
         return closestnode
 
     # Implement an RRT starting from robot position
-    def runRRT(self, NUM_OF_RRT_EPOCH):
+
+    def train(self, net,data, label_name, NUM_OF_RRT_EPOCH):
         
-        self.screen.fill(self.black)
+
+        criterion = nn.MSELoss()
+        optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+        
+        for epoch in range(NUM_OF_RRT_EPOCH):  # loop over the dataset multiple times
+            for i in range(len(data)):
+                # get the inputs
+                inputs, labels = torch.tensor(data[i]['features']) ,torch.tensor(data[i][label_name])
+                #print(inputs)
+                
+
+                # zero the parameter gradients
+                optimizer.zero_grad()
+
+                # forward + backward + optimize
+                output_mu, output_sigma = net(inputs)
+                
+                #print(torch.tensor(labels))
+                loss = criterion(output_mu, labels)
+                loss.backward(retain_graph=True)
+                optimizer.step()
+                
+            print('[%d, %5d] loss: %.3f' %
+                        (epoch + 1, i + 1, loss.item()))
+
+        print('Finished Training')
+        return net
+
+    def runRRT(self, NUM_OF_RRT_EPOCH):
+        print(NUM_OF_RRT_EPOCH)
+        self.game.updateDisplay()
+        #self.screen.fill(self.black)
         STEP = 100 * self.ROBOTRADIUS
         #print "RRT!"
         root = anytree.Node((self.x, self.y))
@@ -127,8 +164,8 @@ class RRT():
 
 
     # Draw robot
-                u = self.game.playerRect.x#u0 + k * x
-                v = self.game.playerRect.y#v0 - k * y
+                #u = self.game.playerRect.x#u0 + k * x
+                #v = self.game.playerRect.y#v0 - k * y
                 #pygame.draw.circle(screen, (255,255,255), (int(u), int(v)), int(k * ROBOTRADIUS), 3)
                 #gameDisplay = pygame.display.set_mode((1500,1000))
                 #gameDisplay.blit(playerImage, ((int(u),int(v))))
@@ -138,12 +175,12 @@ class RRT():
                         #print(node.name)
                         #input()
                         pygame.draw.line(self.screen, (100,100,100), (int( node.name[0]), int(node.name[1])), (int(node.parent.name[0]), int(node.parent.name[1])))
-                #drawBarriers(barriers)
+                
                 pygame.display.flip()
-                self.game.updateDisplay()
+                pygame.display.update()
                 #time.sleep(0.1)
 
-            distfromtarget = math.sqrt((newpossiblepoint[0] - self.target[0])**2 + (newpossiblepoint[1] - self.target[1])**2)
+            #distfromtarget = math.sqrt((newpossiblepoint[0] - self.target[0])**2 + (newpossiblepoint[1] - self.target[1])**2)
             
             
                 
@@ -161,13 +198,30 @@ class RRT():
         pygame.display.flip()
         w = anytree.Walker()
         (upwardsnode, commonnode, downwardsnodes) = w.walk(startnode, targetnode)
+        dataSet = []
         for i, node in enumerate (downwardsnodes):
+            dst = {}
             #print "Node", i, "\n"
             #print node, "\n"
             #print(i,node)
             #input()
             if node != []:
                 #pygame.draw.circle(screen, (255,0,0), (int(node.name[0]), int(node.name[1])), 5, 0)
+                
+                point_a = numpy.array((float(self.game.playerRect.x),float(self.game.playerRect.y)))
+                point_b = numpy.array((float(node.name[0]),float(node.name[1])))
+                state = (self.game.getState())
+                state = self.convolution(state)
+                state = (torch.FloatTensor(state))#.to(device))
+                state_distance = numpy.linalg.norm(point_a - point_b )
+                state_angle = math.degrees(math.atan2(float(node.name[1])-float(self.game.playerRect.y), float(node.name[0])-float(self.game.playerRect.x)))
+                dst['features'] = state
+                dst['distance'] = state_distance
+                dst['angle'   ] =  state_angle
+                dataSet.append(dst)
+                
+                #print(state_angle)
+                #print(node.name)
                 self.game.playerRect.x = int(node.name[0])
                 self.game.playerRect.y = int(node.name[1])
                 pygame.display.flip()
@@ -175,10 +229,14 @@ class RRT():
                 # Angle
                 # DATASET creation
                 self.game.updateDisplay()
-                time.sleep(0.1)
+                #time.sleep(0.1)
+
         self.game.playerRect.x = self.firstX
         self.game.playerRect.y = self.firstY
         self.game.updateDisplay()
+        
+        self.actor_distance = self.train(self.actor_distance, dataSet, 'distance', NUM_OF_RRT_EPOCH)
+        self.actor_angle = self.train(self.actor_angle, dataSet, 'angle', NUM_OF_RRT_EPOCH)
         #for _ in (NUM_OF_RRT_EPOCH):
             #train_networks
         return self.actor_distance, self.actor_angle, self.convolution
@@ -186,7 +244,3 @@ class RRT():
 
     
 #if __name__ == '__main__':
-
-
-
-
