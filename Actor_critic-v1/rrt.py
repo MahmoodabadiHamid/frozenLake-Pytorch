@@ -99,7 +99,7 @@ class RRT():
         
 
         criterion = nn.MSELoss()
-        optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+        optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
         
         for epoch in range(NUM_OF_RRT_EPOCH):  # loop over the dataset multiple times
             for i in range(len(data)):
@@ -119,14 +119,14 @@ class RRT():
                 loss.backward(retain_graph=True)
                 optimizer.step()
                 
-            print('[%d, %5d] loss: %.3f' %
-                        (epoch + 1, i + 1, loss.item()))
+            #print('[%d, %5d] loss: %.3f' %
+                        #(epoch + 1, i + 1, loss.item()))
 
-        print('Finished Training')
+        #print('Finished Training')
         return net
 
-    def runRRT(self, NUM_OF_RRT_EPOCH):
-        print(NUM_OF_RRT_EPOCH)
+    def runRRT(self, NUM_OF_RRT_EPOCH, path):
+        #print(NUM_OF_RRT_EPOCH)
         self.game.updateDisplay()
         #self.screen.fill(self.black)
         STEP = 100 * self.ROBOTRADIUS
@@ -239,6 +239,10 @@ class RRT():
         self.actor_angle = self.train(self.actor_angle, dataSet, 'angle', NUM_OF_RRT_EPOCH)
         #for _ in (NUM_OF_RRT_EPOCH):
             #train_networks
+        torch.save(self.actor_distance, str(path)+'actor_distance.pkl')
+        torch.save(self.actor_angle, str(path)+'actor_angle.pkl')
+        torch.save(self.convolution, str(path)+'convolution.pkl')
+        
         return self.actor_distance, self.actor_angle, self.convolution
     
 

@@ -44,7 +44,7 @@ class game():
         self.winW = 600
         self.winH = 600
         self.bgColor = (0, 0, 0)
-        self.FPS = 10
+        self.FPS = 134
         self.obstacleMinSiz = 20
         self.obstacleMaxSiz = 40
         self.destinyMinSiz = 60
@@ -220,8 +220,8 @@ class game():
         done = 0
         epsilon = 0.1#random.uniform(0,1)
         #print(action)
-        self.angle = (1/((angle +epsilon)*10))
-        self.playerMoveRate =  (1/(distance *10))
+        self.angle = (1/((angle)))
+        self.playerMoveRate =  (1/(distance))
         
         #print(self.angle)
         #print(self.playerMoveRate)
