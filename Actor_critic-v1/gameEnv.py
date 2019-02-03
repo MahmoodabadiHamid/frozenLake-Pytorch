@@ -185,7 +185,7 @@ class game():
                 return True
         return False
 
-
+    
     def nodeHasHitBaddie(self, rect):
         for b in self.baddies:
             if rect.colliderect(b['rect']):
@@ -221,17 +221,15 @@ class game():
     def step(self, distance, angle):
         reward = -1
         done = 0
-        epsilon = 0.1#random.uniform(0,1)
-        self.angle = angle
-        self.playerMoveRate =  distance
-        print(self.angle)
-        print(self.playerMoveRate)
-        print('____')
+        epsilon = 0#random.uniform(0,1)
+        self.angle = (1/((angle)))
+        self.playerMoveRate =   (1/(distance))
+       
         
         #self.playerRect.x += (self.playerMoveRate + epsilon)#(math.sin(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
         #self.playerRect.y += (self.angle) + epsilon         #(math.cos(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
-        self.playerRect.x += (math.sin(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
-        self.playerRect.y +=(math.cos(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
+        self.playerRect.x += (self.playerMoveRate + epsilon) #(math.sin(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
+        self.playerRect.y += (self.angle) + epsilon #(math.cos(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
         
         
         if (self.playerRect.top > self.winH or self.playerRect.top < 0 or self.playerRect.left > self.winW or self.playerRect.left < 0):

@@ -3,7 +3,6 @@ import torch.optim as optim
 import pygame, os, math, time, random, numpy, torch
 from pygame.locals import *
 import anytree
-import gameEnv
 
 
 
@@ -111,11 +110,11 @@ class RRT():
 
                 # forward + backward + optimize
                 output_mu, output_sigma = net(inputs)
-                
                 #print(torch.tensor(labels))
                 loss = criterion(output_mu, labels)
                 loss.backward(retain_graph=True)
                 optimizer.step()
+        
                 
             #print('[%d, %5d] loss: %.3f' %
                         #(epoch + 1, i + 1, loss.item()))
@@ -143,6 +142,7 @@ class RRT():
 
             # Now we have closest node, try to create new node
             vectortonode = (randompoint[0] - closestnode.name[0], randompoint[1] - closestnode.name[1])
+            
             vectortonodelength = math.sqrt(vectortonode[0] **2 + vectortonode[1] **2)
             if (vectortonodelength <= STEP):
                 newpossiblepoint = randompoint
@@ -155,7 +155,7 @@ class RRT():
             obdist = self.calculateClosestObstacleDistance(newpossiblepoint[0], newpossiblepoint[1], 1)
             if (obdist > 30):
                 nextnode = anytree.Node((newpossiblepoint[0], newpossiblepoint[1]), parent=closestnode)
-
+                
 
             if (i % 1 == 0) :
                 pygame.draw.circle(self.screen, (255,255,255), (int(self.target[0]), int(self.target[1])), int(self.ROBOTRADIUS), 0)
