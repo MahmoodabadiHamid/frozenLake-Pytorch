@@ -136,7 +136,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
         cum_reward = 0
         while True :
             state = (env.getState())
-            
+            print(env.playerRect)
             #env.render()
             
             state = convolution(state)
@@ -275,11 +275,8 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
 if __name__ == '__main__':
     print('version 2')
     path = ''#input('input path: ')
-<<<<<<< HEAD
     NUM_OF_RRT_ITER = 0
-=======
-    NUM_OF_RRT_ITER = 10
->>>>>>> fb5c4afcd1e833e70540e06cb87e3f60fe282998
+
     NUM_OF_RRT_EPOCH = 10
     
     if os.path.exists(str(path)+'actor_distance.pkl'):
@@ -314,16 +311,11 @@ if __name__ == '__main__':
     for k in range(NUM_OF_RRT_ITER):
         print('RRT Iteration: ',str(k))
         rrt_obj = rrt.RRT(env, actor_distance, actor_angle, convolution)
-<<<<<<< HEAD
         actor_distance, actor_angle, convolution = rrt_obj.runRRT(NUM_OF_RRT_EPOCH, path)
         
     env.FPS = 14
-    n_iters = 100# input('number of iteration? ')
+    n_iters = 10# input('number of iteration? ')
     print('RRT training has been done!')
-=======
-        actor_distance, actor_angle, convolution = rrt_obj.runRRT(NUM_OF_RRT_EPOCH)
 
-    n_iters =  input('number of iteration? ')
->>>>>>> fb5c4afcd1e833e70540e06cb87e3f60fe282998
     main(actor_distance, actor_angle, critic, convolution, env, int(n_iters))
 

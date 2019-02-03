@@ -219,17 +219,17 @@ class game():
         reward = -1
         done = 0
         epsilon = 0.1#random.uniform(0,1)
-        #print(action)
         self.angle = (1/((angle)))
         self.playerMoveRate =  (1/(distance))
         
         #print(self.angle)
         #print(self.playerMoveRate)
-        self.playerRect.x += (self.playerMoveRate + epsilon)#(math.sin(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
-        self.playerRect.y += (math.cos(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
+        #x2
+        #y2
         
-        #self.playerRect.move_ip(math.sin(self.angle) * self.playerMoveRate,0)
-        #self.playerRect.move_ip(0, math.cos(self.angle)* self.playerMoveRate)
+        self.playerRect.x += (self.playerMoveRate + epsilon)#(math.sin(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
+        self.playerRect.y += (self.angle) + epsilon         #(math.cos(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
+        
         
         if (self.playerRect.top > self.winH or self.playerRect.top < 0 or self.playerRect.left > self.winW or self.playerRect.left < 0):
             reward = -1000
