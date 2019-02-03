@@ -156,7 +156,8 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
 
             distance = normal_dist_distance.sample()
             angle    = normal_dist_angle.sample()
-            
+            #print(distance)
+            #print(angle)
 
             #log_prob_distance = torch.log(torch.pow( torch.sqrt(2. * sigma1 * np.pi) , -1)) - (normal_dist_distance - mu1)*(normal_dist_distance - mu1)*torch.pow((2. * sigma1), -1)
             log_prob_distance = normal_dist_distance.log_prob(distance).unsqueeze(0)
@@ -275,11 +276,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
 if __name__ == '__main__':
     print('version 2')
     path = ''#input('input path: ')
-<<<<<<< HEAD
-    NUM_OF_RRT_ITER = 0
-=======
-    NUM_OF_RRT_ITER = 10
->>>>>>> fb5c4afcd1e833e70540e06cb87e3f60fe282998
+    NUM_OF_RRT_ITER = 3
     NUM_OF_RRT_EPOCH = 10
     
     if os.path.exists(str(path)+'actor_distance.pkl'):
@@ -314,16 +311,12 @@ if __name__ == '__main__':
     for k in range(NUM_OF_RRT_ITER):
         print('RRT Iteration: ',str(k))
         rrt_obj = rrt.RRT(env, actor_distance, actor_angle, convolution)
-<<<<<<< HEAD
         actor_distance, actor_angle, convolution = rrt_obj.runRRT(NUM_OF_RRT_EPOCH, path)
-        
-    env.FPS = 14
+    #env.FPS = 14
     n_iters = 100# input('number of iteration? ')
     print('RRT training has been done!')
-=======
-        actor_distance, actor_angle, convolution = rrt_obj.runRRT(NUM_OF_RRT_EPOCH)
-
-    n_iters =  input('number of iteration? ')
->>>>>>> fb5c4afcd1e833e70540e06cb87e3f60fe282998
     main(actor_distance, actor_angle, critic, convolution, env, int(n_iters))
+
+
+
 
