@@ -123,7 +123,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
         
     for i in range(n_iters):
         #state = (env.getState())
-        if (i%500 == 0 and i != 0):
+        if (i%100 == 0 and i != 0):
             print('Iteration: {}, Score: {}'.format(i, cum_rewards[-1]))
         log_probs_distance = []
         log_probs_angle = []
