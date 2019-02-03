@@ -3,6 +3,7 @@ import torch.optim as optim
 import pygame, os, math, time, random, numpy, torch
 from pygame.locals import *
 import anytree
+import gameEnv
 
 
 
@@ -96,25 +97,27 @@ class RRT():
 
     def train(self, net,data, label_name, NUM_OF_RRT_EPOCH):
         
+
         criterion = nn.MSELoss()
         optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
- 
+        
         for epoch in range(NUM_OF_RRT_EPOCH):  # loop over the dataset multiple times
             for i in range(len(data)):
                 # get the inputs
                 inputs, labels = torch.tensor(data[i]['features']) ,torch.tensor(data[i][label_name])
+                #print(inputs)
                 
-                
+
                 # zero the parameter gradients
                 optimizer.zero_grad()
 
                 # forward + backward + optimize
                 output_mu, output_sigma = net(inputs)
+                
                 #print(torch.tensor(labels))
                 loss = criterion(output_mu, labels)
                 loss.backward(retain_graph=True)
                 optimizer.step()
-        
                 
             #print('[%d, %5d] loss: %.3f' %
                         #(epoch + 1, i + 1, loss.item()))
@@ -142,7 +145,6 @@ class RRT():
 
             # Now we have closest node, try to create new node
             vectortonode = (randompoint[0] - closestnode.name[0], randompoint[1] - closestnode.name[1])
-            
             vectortonodelength = math.sqrt(vectortonode[0] **2 + vectortonode[1] **2)
             if (vectortonodelength <= STEP):
                 newpossiblepoint = randompoint
@@ -155,7 +157,7 @@ class RRT():
             obdist = self.calculateClosestObstacleDistance(newpossiblepoint[0], newpossiblepoint[1], 1)
             if (obdist > 30):
                 nextnode = anytree.Node((newpossiblepoint[0], newpossiblepoint[1]), parent=closestnode)
-                
+
 
             if (i % 1 == 0) :
                 pygame.draw.circle(self.screen, (255,255,255), (int(self.target[0]), int(self.target[1])), int(self.ROBOTRADIUS), 0)
@@ -216,7 +218,6 @@ class RRT():
                 dst['features'] = state
                 dst['distance'] = state_distance
                 dst['angle'   ] =  state_angle
-                
                 dataSet.append(dst)
                 
                 #print(state_angle)
@@ -233,7 +234,7 @@ class RRT():
         self.game.playerRect.x = self.firstX
         self.game.playerRect.y = self.firstY
         self.game.updateDisplay()
-
+        
         self.actor_distance = self.train(self.actor_distance, dataSet, 'distance', NUM_OF_RRT_EPOCH)
         self.actor_angle = self.train(self.actor_angle, dataSet, 'angle', NUM_OF_RRT_EPOCH)
         #for _ in (NUM_OF_RRT_EPOCH):

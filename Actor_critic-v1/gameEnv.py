@@ -5,7 +5,7 @@ from PIL import Image
 import numpy as np
 #from itertools import count
 import torch
-import pygame, random
+import pygame, random, sys
 from pygame.locals import *
 import time
 import math
@@ -156,19 +156,24 @@ class game():
         
 
     def getState(self):
+        self.mainClock.tick(self.FPS)
+        
         state = pygame.surfarray.array3d(pygame.display.get_surface())
+        #if (random.randint(0,100) == 2):
+            #plt.imshow(state)
+            #plt.show()
         state = state.transpose((2, 0, 1))
         state = np.ascontiguousarray(state, dtype=np.float32) 
         state = torch.from_numpy(state)
         state = self.transform(state).unsqueeze(0)
-
+        
+        #plt.imshow(state)
+        #plt.show()
         return state
-
 
     def terminate(self):
         pygame.quit()
         #sys.exit()
-
 
     def waitForPlayerToPressKey():
         while True:
@@ -178,34 +183,28 @@ class game():
                         self.terminate()
                     return
 
-
     def playerHasHitBaddie(self):
         for b in self.baddies:
             if self.playerRect.colliderect(b['rect']):
                 return True
         return False
 
-    
     def nodeHasHitBaddie(self, rect):
         for b in self.baddies:
             if rect.colliderect(b['rect']):
                 return True
         return False
-    
 
     def playerHasRichDestiny(self):
          for d in self.destiny:
              if self.playerRect.colliderect(d['rect']):
                  return True
          return False
-     
-        
     def nodeHasRichDestiny(self, rect):
          for d in self.destiny:
              if rect.colliderect(d['rect']):
                  return True
          return False
-
 
     def compute_returns(self, next_value, rewards, masks, gamma=0.9):
         R = next_value
@@ -214,8 +213,6 @@ class game():
             R = rewards[step] + gamma * R * masks[step]
             returns.insert(0, R)
         return returns
-
-
 
 
     def step(self, distance, angle):
@@ -246,9 +243,6 @@ class game():
         n_s = self.getState()
         self.updateDisplay()  
         return n_s, reward, done, 'info'
-
-
-
 
     def updateDisplay(self):
         #for event in pygame.event.get():
@@ -281,7 +275,61 @@ class game():
         pygame.display.update()
 
         
+    def play(self):
 
+        self.values = []
+        rewards = []
+        masks = []
+        reward = 0
+        done = 0
+        self.playerRect.topleft = (self.winW / 2, self.winH - 50)
+        self.updateDisplay()
+        state = self.getState()
+        stepCounter = 0
+        while True:
+            stepCounter += 1
+            action = self.actor(state)
+            #print(action)
+            #input()
+            self.angle, self.playerMoveRate = float(action[0]), float(action[1]) # action[0] -> distance; action[1] -> angle
+            
+            reward = self.step()
+            value = self.critic(state)
+            #log_prob = dist.log_prob(self.Action).unsqueeze(0)
+            #self.log_probs.append(log_prob)
+
+            state = self.getState()
+            
+            self.state = torch.FloatTensor(state)
+            self.value = self.critic(self.state)
+                
+            self.values.append(self.value)
+            rewards.append(torch.tensor([reward], dtype=torch.float))
+            masks.append(torch.tensor([1-done], dtype=torch.float))
+
+            if (self.playerHasHitBaddie()       or
+              self.playerRect.top > self.winH   or
+              self.playerRect.top < 0           or
+              self.playerRect.left > self.winW  or
+              self.playerRect.left < 0):
+                break
+            self.updateDisplay()
+                
+            self.mainClock.tick(self.FPS)
+        self.terminate()
+        
+        print('stepCounter', stepCounter)
+        returns = self.compute_returns(self.value, rewards, masks)
+
+        returns = torch.cat(returns).detach()
+        self.values = torch.cat(self.values)
+
+        advantage = returns - self.values
+
+        self.actor_loss = -(advantage.detach()).mean()
+        self.critic_loss = advantage.pow(2).mean()
+        
+        return  self.actor_loss, self.critic_loss
         
             
 if __name__ == '__main__':
