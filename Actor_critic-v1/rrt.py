@@ -97,17 +97,15 @@ class RRT():
 
     def train(self, net,data, label_name, NUM_OF_RRT_EPOCH):
         
-
         criterion = nn.MSELoss()
         optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9)
-        
+ 
         for epoch in range(NUM_OF_RRT_EPOCH):  # loop over the dataset multiple times
             for i in range(len(data)):
                 # get the inputs
                 inputs, labels = torch.tensor(data[i]['features']) ,torch.tensor(data[i][label_name])
-                #print(inputs)
                 
-
+                
                 # zero the parameter gradients
                 optimizer.zero_grad()
 
@@ -218,6 +216,7 @@ class RRT():
                 dst['features'] = state
                 dst['distance'] = state_distance
                 dst['angle'   ] =  state_angle
+                
                 dataSet.append(dst)
                 
                 #print(state_angle)
@@ -234,7 +233,7 @@ class RRT():
         self.game.playerRect.x = self.firstX
         self.game.playerRect.y = self.firstY
         self.game.updateDisplay()
-        
+
         self.actor_distance = self.train(self.actor_distance, dataSet, 'distance', NUM_OF_RRT_EPOCH)
         self.actor_angle = self.train(self.actor_angle, dataSet, 'angle', NUM_OF_RRT_EPOCH)
         #for _ in (NUM_OF_RRT_EPOCH):

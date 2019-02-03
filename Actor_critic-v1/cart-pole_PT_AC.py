@@ -134,16 +134,15 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
 
         #for i in count():
         cum_reward = 0
+        state = (env.getState())
         while True :
-            state = (env.getState())
+            
             print(env.playerRect)
             #env.render()
             
             state = convolution(state)
             state = (torch.FloatTensor(state))#.to(device))
-            #state = np.reshape()
 
-            
             mu1,sigma1 = actor_distance(state)
             mu2,sigma2 = actor_angle(state)
             
@@ -178,12 +177,11 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
             next_state, reward, done, _ = env.step(distance, angle)
 
             cum_reward += reward
-            #print(cum_reward)
-            #input()
+
             if (done):
+                print('Done!')
                 env.terminate()
                 break
-                #print('hi')
                 
             values.append(value)
             rewards.append(torch.tensor([reward], dtype=torch.float))#, device=device))
@@ -275,9 +273,9 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
 if __name__ == '__main__':
     print('version 2')
     path = ''#input('input path: ')
-    NUM_OF_RRT_ITER = 0
+    NUM_OF_RRT_ITER = 5
 
-    NUM_OF_RRT_EPOCH = 10
+    NUM_OF_RRT_EPOCH = 1
     
     if os.path.exists(str(path)+'actor_distance.pkl'):
         actor_distance = torch.load(str(path)+'actor_distance.pkl')
@@ -314,7 +312,7 @@ if __name__ == '__main__':
         actor_distance, actor_angle, convolution = rrt_obj.runRRT(NUM_OF_RRT_EPOCH, path)
         
     env.FPS = 14
-    n_iters = 10# input('number of iteration? ')
+    n_iters = 50# input('number of iteration? ')
     print('RRT training has been done!')
 
     main(actor_distance, actor_angle, critic, convolution, env, int(n_iters))
