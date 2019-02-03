@@ -313,7 +313,7 @@ if __name__ == '__main__':
         actor_distance, actor_angle, convolution = rrt_obj.runRRT(NUM_OF_RRT_EPOCH, path)
         
     env.FPS = 14
-    n_iters = 100# input('number of iteration? ')
+    n_iters = 1000# input('number of iteration? ')
     print('RRT training has been done!')
     main(actor_distance, actor_angle, critic, convolution, env, int(n_iters))
 
