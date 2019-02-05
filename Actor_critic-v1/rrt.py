@@ -103,10 +103,11 @@ class RRT():
         
         for epoch in range(NUM_OF_RRT_EPOCH):  # loop over the dataset multiple times
             for i in range(len(data)):
+                
                 # get the inputs
                 inputs, labels = torch.tensor(data[i]['features']) ,torch.tensor(data[i][label_name])
                 #print(inputs)
-                
+                print(labels)
 
                 # zero the parameter gradients
                 optimizer.zero_grad()
