@@ -14,7 +14,7 @@ import torch.nn.functional as F
 from torch.distributions import Normal
 
 
-#device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #env = gym.make("CartPole-v0").unwrapped
 
 state_size = 12*12#env.observation_space.shape[0]
@@ -135,6 +135,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
         #for i in count():
         cum_reward = 0
         while True :
+            env.updateDisplay()
             state = (env.getState())
             
             #env.render()
@@ -194,7 +195,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
             #if done:
                 #print('Iteration: {}, Score: {}'.format(iter, i))
                 #break
-            env.updateDisplay()
+            #env.updateDisplay()
                               
             env.mainClock.tick(env.FPS)
             if (env.playerHasHitBaddie()       or
@@ -208,64 +209,72 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
         cum_reward = 0
         
         
-        next_state = torch.FloatTensor(convolution(next_state))#.to(device)
-        next_value = critic(next_state)
+        next_state = torch.FloatTensor(convolution(next_state)).to(device)
+        next_value = critic(next_state).to(device)
         returns = compute_returns(next_value, rewards, masks)
         #log_probs = torch.tensor(log_probs)
         #print(log_probs)
         #print(len(log_probs))
         #input()
 
-        log_probs_distance = torch.cat(log_probs_distance)
-        log_probs_angle = torch.cat(log_probs_angle)
+        log_probs_distance = torch.cat(log_probs_distance).to(device)
+        log_probs_angle = torch.cat(log_probs_angle).to(device)
         
-        returns = torch.cat(returns).detach()
-        values = torch.cat(values)
+        try:
         
-        advantage = returns - values
-        
-        actor_distance_loss = -(log_probs_distance* advantage.detach()).mean()
-        #print("log prob",log_probs_angle)
-        #print("advantage",advantage.detach())
-        actor_angle_loss = -(log_probs_angle * advantage.detach()).mean()
-        critic_loss = advantage.pow(2).mean()
-
-        #print('actorloss', actor_loss)
-        #input()
-        #actor_loss = Variable(actor_loss , requires_grad = True)
-        #critic_loss = Variable(critic_loss , requires_grad = True)
-        #grad_fn=<NegBackward>
-        #actor_loss = torch.tensor(actor_loss, requires_grad=True)
-        #critic_loss = torch.tensor(critic_loss, requires_grad=True)
-        
-        optimizerActorDistance.zero_grad()
-        optimizerActorAngle.zero_grad()
-        optimizerC.zero_grad()
-        
-        actor_distance_loss.backward(retain_graph=True)
-        actor_angle_loss.backward(retain_graph=True)
-        
-        critic_loss.backward(retain_graph=True)
-        optimizerActorDistance.step()
-        optimizerActorAngle.step()
-        optimizerC.step()
-        env =  gameEnv.game(actor_distance, actor_angle, critic, level = 'EASY')
-        
-        torch.save(actor_distance, str(path)+'actor_distance.pkl')
-        torch.save(actor_angle, str(path)+'actor_angle.pkl')
-        torch.save(critic, str(path)+'critic.pkl')
-        torch.save(convolution, str(path)+'convolution.pkl')
-        
-        
-        print(critic_loss)
-        print(actor_distance_loss)
-        print(actor_angle_loss)
-        #for param in actor_angle.parameters():
-        #    print(param)
-        #input()
-        #for param in actor_distance.parameters():
-        #    print(param.grad)
-        #input()
+            returns = torch.cat(returns).detach().to(device)
+            values = torch.cat(values).to(device)
+            
+            advantage = returns - values
+            
+            actor_distance_loss = -(log_probs_distance* advantage.detach()).mean().to(device)
+            #print("log prob",log_probs_angle)
+            #print("advantage",advantage.detach())
+            actor_angle_loss = -(log_probs_angle * advantage.detach()).mean().to(device)
+            critic_loss = advantage.pow(2).mean().to(device)
+    
+            #print('actorloss', actor_loss)
+            #input()
+            #actor_loss = Variable(actor_loss , requires_grad = True)
+            #critic_loss = Variable(critic_loss , requires_grad = True)
+            #grad_fn=<NegBackward>
+            #actor_loss = torch.tensor(actor_loss, requires_grad=True)
+            #critic_loss = torch.tensor(critic_loss, requires_grad=True)
+            
+            optimizerActorDistance.zero_grad()
+            optimizerActorAngle.zero_grad()
+            optimizerC.zero_grad()
+            
+            actor_distance_loss.backward(retain_graph=True)
+            actor_angle_loss.backward(retain_graph=True)
+            
+            critic_loss.backward(retain_graph=True)
+            optimizerActorDistance.step()
+            optimizerActorAngle.step()
+            optimizerC.step()
+            env =  gameEnv.game(actor_distance, actor_angle, critic, level = 'EASY')
+            
+            torch.save(actor_distance, str(path)+'actor_distance.pkl')
+            torch.save(actor_angle, str(path)+'actor_angle.pkl')
+            torch.save(critic, str(path)+'critic.pkl')
+            torch.save(convolution, str(path)+'convolution.pkl')
+            
+            
+            #print(critic_loss)
+            #print(actor_distance_loss)
+            #print(actor_angle_loss)
+            #for param in actor_angle.parameters():
+            #    print(param)
+            #input()
+            #for param in actor_distance.parameters():
+            #    print(param.grad)
+            #input()
+        except:
+            env =  gameEnv.game(actor_distance, actor_angle, critic, level = 'EASY')
+            print("something wrong happened")
+        plt.plot(list(range(0, len(cum_rewards))),cum_rewards)
+        plt.savefig('Reward Plot')
+        plt.show()
     #print(len(cum_rewards))
     plt.plot(list(range(0, len(cum_rewards))),cum_rewards)
     plt.show()
@@ -279,41 +288,41 @@ if __name__ == '__main__':
     NUM_OF_RRT_EPOCH = 10
     
     if os.path.exists(str(path)+'actor_distance.pkl'):
-        actor_distance = torch.load(str(path)+'actor_distance.pkl')
+        actor_distance = torch.load(str(path)+'actor_distance.pkl').to(device)
         print('actor_distance Model loaded')
     else:
-        actor_distance = Actor(state_size, action_size)#.to(device)
+        actor_distance = Actor(state_size, action_size).to(device)
         print('actor_distance Model created')
         
     if os.path.exists(str(path)+'actor_angle.pkl'):
-        actor_angle = torch.load(str(path)+'actor_angle.pkl')
+        actor_angle = torch.load(str(path)+'actor_angle.pkl').to(device)
         print('actor_angle Model loaded')
     else:
-        actor_angle = Actor(state_size, action_size)#.to(device)
+        actor_angle = Actor(state_size, action_size).to(device)
         print('actor_angle Model created')
         
     if os.path.exists(str(path)+'critic.pkl'): 
-        critic = torch.load(str(path)+'critic.pkl')
+        critic = torch.load(str(path)+'critic.pkl').to(device)
         print('Critic Model loaded')
     else:
-        critic = Critic(state_size, action_size=1)#.to(device)
+        critic = Critic(state_size, action_size=1).to(device)
         print('Critic Model created')
     if os.path.exists(str(path)+'convolution.pkl'):
-        convolution = torch.load(str(path)+'convolution.pkl')
+        convolution = torch.load(str(path)+'convolution.pkl').to(device)
         print('convolution Model loaded')
     else:
-        convolution = Convolution()
+        convolution = Convolution().to(device)
         print('convolution Model created')
     
     env =  gameEnv.game(actor_distance, actor_angle, critic, level = 'EASY')
     #env.FPS = 200
     for k in range(NUM_OF_RRT_ITER):
         print('RRT Iteration: ',str(k))
-        rrt_obj = rrt.RRT(env, actor_distance, actor_angle, convolution)
-        actor_distance, actor_angle, convolution = rrt_obj.runRRT(NUM_OF_RRT_EPOCH, path)
+        #rrt_obj = rrt.RRT(env, actor_distance, actor_angle, convolution)
+        #actor_distance, actor_angle, convolution = rrt_obj.runRRT(NUM_OF_RRT_EPOCH, path)
         
-    env.FPS = 14
-    n_iters = 1000# input('number of iteration? ')
+    env.FPS = 50
+    n_iters = 100000# input('number of iteration? ')
     print('RRT training has been done!')
     main(actor_distance, actor_angle, critic, convolution, env, int(n_iters))
 

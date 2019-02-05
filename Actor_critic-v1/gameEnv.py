@@ -44,7 +44,7 @@ class game():
         self.winW = 600
         self.winH = 600
         self.bgColor = (0, 0, 0)
-        self.FPS = 134
+        self.FPS = 24
         self.obstacleMinSiz = 20
         self.obstacleMaxSiz = 40
         self.destinyMinSiz = 60
@@ -216,7 +216,7 @@ class game():
 
 
     def step(self, distance, angle):
-        reward = -1
+        reward =-1
         done = 0
         epsilon = 0.1#random.uniform(0,1)
         #print(action)
@@ -232,25 +232,31 @@ class game():
         #self.playerRect.move_ip(0, math.cos(self.angle)* self.playerMoveRate)
         
         if (self.playerRect.top > self.winH or self.playerRect.top < 0 or self.playerRect.left > self.winW or self.playerRect.left < 0):
-            reward = -1000
-            done = 1
+            reward = -100
+            done = 0
+            self.playerRect.x -= (self.playerMoveRate + epsilon)+1#(math.sin(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
+            self.playerRect.y -= (math.cos(self.angle) + epsilon) * (self.playerMoveRate + epsilon)+1
+        
         if self.playerHasHitBaddie():
             reward = -1000
             done = 1
         if self.playerHasRichDestiny():
-             reward = +1000
+             reward = +10000
              done = 1
+        self.updateDisplay() 
         n_s = self.getState()
-        #self.updateDisplay()  
+         
         return n_s, reward, done, 'info'
 
     def updateDisplay(self):
+        self.bgColor = (0, 0, 0)
         #for event in pygame.event.get():
         #    if event.type == QUIT:
         #        self.terminate()
         for b in self.baddies:
            b['rect'].move_ip(0, b['speed'])
-        self.windowSurface.fill(self.bgColor)        
+        
+        self.windowSurface.fill(self.bgColor)
         self.windowSurface.blit(self.playerImage, self.playerRect)
         
         for b in self.baddies:
@@ -274,65 +280,10 @@ class game():
         
         pygame.display.update()
 
-        
-    def play(self):
 
-        self.values = []
-        rewards = []
-        masks = []
-        reward = 0
-        done = 0
-        self.playerRect.topleft = (self.winW / 2, self.winH - 50)
-        self.updateDisplay()
-        state = self.getState()
-        stepCounter = 0
-        while True:
-            stepCounter += 1
-            action = self.actor(state)
-            #print(action)
-            #input()
-            self.angle, self.playerMoveRate = float(action[0]), float(action[1]) # action[0] -> distance; action[1] -> angle
-            
-            reward = self.step()
-            value = self.critic(state)
-            #log_prob = dist.log_prob(self.Action).unsqueeze(0)
-            #self.log_probs.append(log_prob)
-
-            state = self.getState()
-            
-            self.state = torch.FloatTensor(state)
-            self.value = self.critic(self.state)
-                
-            self.values.append(self.value)
-            rewards.append(torch.tensor([reward], dtype=torch.float))
-            masks.append(torch.tensor([1-done], dtype=torch.float))
-
-            if (self.playerHasHitBaddie()       or
-              self.playerRect.top > self.winH   or
-              self.playerRect.top < 0           or
-              self.playerRect.left > self.winW  or
-              self.playerRect.left < 0):
-                break
-            self.updateDisplay()
-                
-            self.mainClock.tick(self.FPS)
-        self.terminate()
-        
-        print('stepCounter', stepCounter)
-        returns = self.compute_returns(self.value, rewards, masks)
-
-        returns = torch.cat(returns).detach()
-        self.values = torch.cat(self.values)
-
-        advantage = returns - self.values
-
-        self.actor_loss = -(advantage.detach()).mean()
-        self.critic_loss = advantage.pow(2).mean()
-        
-        return  self.actor_loss, self.critic_loss
         
             
 if __name__ == '__main__':
-    main.main(numOfEpisodes = 100000)
+    main()
 
 
