@@ -241,7 +241,7 @@ class game():
              reward = +1000
              done = 1
         n_s = self.getState()
-        self.updateDisplay()  
+        #self.updateDisplay()  
         return n_s, reward, done, 'info'
 
     def updateDisplay(self):

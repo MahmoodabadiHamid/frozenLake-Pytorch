@@ -276,7 +276,8 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
 if __name__ == '__main__':
     print('version 2')
     path = ''#input('input path: ')
-    NUM_OF_RRT_ITER = 3
+
+    NUM_OF_RRT_ITER = 0
     NUM_OF_RRT_EPOCH = 10
     
     if os.path.exists(str(path)+'actor_distance.pkl'):
@@ -312,8 +313,10 @@ if __name__ == '__main__':
         print('RRT Iteration: ',str(k))
         rrt_obj = rrt.RRT(env, actor_distance, actor_angle, convolution)
         actor_distance, actor_angle, convolution = rrt_obj.runRRT(NUM_OF_RRT_EPOCH, path)
-    #env.FPS = 14
-    n_iters = 100# input('number of iteration? ')
+
+        
+    env.FPS = 14
+    n_iters = 1000# input('number of iteration? ')
     print('RRT training has been done!')
     main(actor_distance, actor_angle, critic, convolution, env, int(n_iters))
 
