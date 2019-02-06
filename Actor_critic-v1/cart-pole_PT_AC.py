@@ -15,6 +15,7 @@ from torch.distributions import Normal
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(device)
 #env = gym.make("CartPole-v0").unwrapped
 
 state_size = 12*12#env.observation_space.shape[0]
@@ -51,11 +52,13 @@ class Convolution(nn.Module):
                 #nn.ReLU(),
                 nn.MaxPool2d(2))
         
-        #_____________ End of CNN Layer ___________________________
+        #_____________ End of Conv Layer definition ___________________________
     def forward(self, state):
         
         #state = self.transform(state.squeeze())
         #print('here')
+        #print(type(state))
+        state=state.to(device)
         conv1 = self.layer1(state)
         conv2 = self.layer2(state)
         conv3 = self.layer3(state)
@@ -107,9 +110,15 @@ class Critic(nn.Module):
 
 
 def compute_returns(next_value, rewards, masks, gamma=0.99):
-    R = next_value
+    #rewards=rewards.to(device)
+    #masks=masks.to(device)
+    R = next_value.to(device)
     returns = []
     for step in reversed(range(len(rewards))):
+        rewards[step] = rewards[step].to(device)
+        #gamma = gamma.to(device)
+        R = R.to(device)
+        masks[step] = masks[step].to(device)
         R = rewards[step] + gamma * R * masks[step]
         returns.insert(0, R)
     return returns
@@ -136,12 +145,12 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
         cum_reward = 0
         while True :
             env.updateDisplay()
-            state = (env.getState())
+            state = (env.getState().to(device))
             
             #env.render()
             
             state = convolution(state)
-            state = (torch.FloatTensor(state))#.to(device))
+            state = ((state).to(device))
             #state = np.reshape()
 
             
@@ -190,7 +199,8 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
             rewards.append(torch.tensor([reward], dtype=torch.float))#, device=device))
             masks.append(torch.tensor([1-done], dtype=torch.float))#, device=device))
 
-            state = next_state
+            state = next_state.to(device)
+            
             #print(state)
             #if done:
                 #print('Iteration: {}, Score: {}'.format(iter, i))
@@ -209,8 +219,8 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
         cum_reward = 0
         
         
-        next_state = torch.FloatTensor(convolution(next_state)).to(device)
-        next_value = critic(next_state).to(device)
+        next_state = ((convolution(next_state)))
+        next_value = critic(next_state.to(device))
         returns = compute_returns(next_value, rewards, masks)
         #log_probs = torch.tensor(log_probs)
         #print(log_probs)
@@ -257,7 +267,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
             torch.save(actor_distance, str(path)+'actor_distance.pkl')
             torch.save(actor_angle, str(path)+'actor_angle.pkl')
             torch.save(critic, str(path)+'critic.pkl')
-            torch.save(convolution, str(path)+'convolution.pkl')
+            torch.save(convolution.to(device), str(path)+'convolution.pkl')
             
             
             #print(critic_loss)
@@ -321,7 +331,7 @@ if __name__ == '__main__':
         #rrt_obj = rrt.RRT(env, actor_distance, actor_angle, convolution)
         #actor_distance, actor_angle, convolution = rrt_obj.runRRT(NUM_OF_RRT_EPOCH, path)
         
-    env.FPS = 50
+    env.FPS = 24
     n_iters = 100000# input('number of iteration? ')
     print('RRT training has been done!')
     main(actor_distance, actor_angle, critic, convolution, env, int(n_iters))

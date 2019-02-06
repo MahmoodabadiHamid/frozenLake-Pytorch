@@ -165,7 +165,7 @@ class game():
         state = state.transpose((2, 0, 1))
         state = np.ascontiguousarray(state, dtype=np.float32) 
         state = torch.from_numpy(state)
-        state = self.transform(state).unsqueeze(0)
+        state = self.transform(state).unsqueeze(0)#.to('cuda')
         
         #plt.imshow(state)
         #plt.show()
