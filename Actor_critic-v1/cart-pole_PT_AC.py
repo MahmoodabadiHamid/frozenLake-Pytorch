@@ -18,7 +18,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 #env = gym.make("CartPole-v0").unwrapped
 
-state_size = 12*12#env.observation_space.shape[0]
+state_size = 1*36
+#env.observation_space.shape[0]
 action_size = 2#env.action_space.n
 lr = 0.1e-3
 
@@ -32,25 +33,14 @@ class Convolution(nn.Module):
                 nn.Conv2d(1, 1, kernel_size=5, padding=2),
                 #nn.BatchNorm2d(1),
                 #nn.ReLU(),
-                nn.MaxPool2d(2))
+                nn.MaxPool2d(2)).to(device)
 
         self.layer2 = nn.Sequential(
                 nn.Conv2d(1, 1, kernel_size=5, padding=2),
-                #nn.BatchNorm2d(1),
+                nn.BatchNorm2d(1),
                 #nn.ReLU(),
-                nn.MaxPool2d(2))
+                nn.MaxPool2d(2)).to(device)
 
-        self.layer3 = nn.Sequential(
-                nn.Conv2d(1, 1, kernel_size=5, padding=2),
-                #nn.BatchNorm2d(1),
-                #nn.ReLU(),
-                nn.MaxPool2d(2))
-
-        self.layer4 = nn.Sequential(
-                nn.Conv2d(1, 1, kernel_size=5, padding=2),
-                #nn.BatchNorm2d(1),
-                #nn.ReLU(),
-                nn.MaxPool2d(2))
         
         #_____________ End of Conv Layer definition ___________________________
     def forward(self, state):
@@ -58,12 +48,11 @@ class Convolution(nn.Module):
         #state = self.transform(state.squeeze())
         #print('here')
         #print(type(state))
+        
         state=state.to(device)
         conv1 = self.layer1(state)
-        conv2 = self.layer2(state)
-        conv3 = self.layer3(state)
-        conv4 = self.layer4(state)
-        state = conv4.view(1, -1)
+        conv2 = self.layer2(conv1)
+        state = conv2.view(1, -1)
         return state
 
 class Actor(nn.Module):
@@ -71,18 +60,19 @@ class Actor(nn.Module):
         super(Actor, self).__init__()
         self.state_size = state_size
         self.action_size = action_size
-        self.linear1 = nn.Linear(self.state_size, 128)
-        self.linear2 = nn.Linear(128, 256)
-        self.linear3 = nn.Linear(256, self.action_size)
+        
+        self.linear1 = nn.Linear(self.state_size, 18).to(device)
+        self.linear2 = nn.Linear(18, 9).to(device)
+        self.linear3 = nn.Linear(9, self.action_size).to(device)
 
     def forward(self, state):
+       
+        output1 = F.relu(self.linear1(state))
+        output2 = F.relu(self.linear2(output1))
+        output3 = self.linear3(output2)[0]
         
-        output = F.relu(self.linear1(state))
-        output = F.relu(self.linear2(output))
-        output = self.linear3(output)[0]
-        
-        mu = output[0]
-        sigma = output[1]
+        mu = output3[0]
+        sigma = output3[1]
         
         #print('aaa')
         #input(output)
@@ -98,14 +88,14 @@ class Critic(nn.Module):
         self.state_size = state_size
         self.action_size = action_size
         
-        self.linear1 = nn.Linear(self.state_size, 128)
-        self.linear2 = nn.Linear(128, 256)
-        self.linear3 = nn.Linear(256, 1)
+        self.linear1 = nn.Linear(self.state_size, 18).to(device)
+        self.linear2 = nn.Linear(18, 9).to(device)
+        self.linear3 = nn.Linear(9, 1).to(device)
 
     def forward(self, state):
-        output = F.relu(self.linear1(state))
-        output = F.relu(self.linear2(output))
-        value = self.linear3(output)
+        output1 = F.relu(self.linear1(state))
+        output2 = F.relu(self.linear2(output1))
+        value   = self.linear3(output2)
         return value
 
 
@@ -151,8 +141,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
             
             state = convolution(state)
             state = ((state).to(device))
-            #state = np.reshape()
-
+            
             
             mu1,sigma1 = actor_distance(state)
             mu2,sigma2 = actor_angle(state)
@@ -282,7 +271,12 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
         except:
             env =  gameEnv.game(actor_distance, actor_angle, critic, level = 'EASY')
             print("something wrong happened")
+       
+        #avg_cum_rewards = [(((cum_rewards[i]) + (cum_rewards[i]-1) + (cum_rewards[i]-2) + (cum_rewards[i]-3) + (cum_rewards[i]-4))/5) for i in range(len(cum_rewards))]
+        
         plt.plot(list(range(0, len(cum_rewards))),cum_rewards)
+        #plt.plot(list(range(0, len(avg_cum_rewards))),avg_cum_rewards)
+        
         plt.savefig('Reward Plot')
         plt.show()
     #print(len(cum_rewards))

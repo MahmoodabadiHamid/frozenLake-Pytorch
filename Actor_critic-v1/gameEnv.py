@@ -232,7 +232,7 @@ class game():
         #self.playerRect.move_ip(0, math.cos(self.angle)* self.playerMoveRate)
         
         if (self.playerRect.top > self.winH or self.playerRect.top < 0 or self.playerRect.left > self.winW or self.playerRect.left < 0):
-            reward = -100
+            reward = -10
             done = 0
             self.playerRect.x -= (self.playerMoveRate + epsilon)+1#(math.sin(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
             self.playerRect.y -= (math.cos(self.angle) + epsilon) * (self.playerMoveRate + epsilon)+1
