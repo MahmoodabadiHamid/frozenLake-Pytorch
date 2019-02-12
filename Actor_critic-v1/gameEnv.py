@@ -12,7 +12,7 @@ import math
 
 class game():
     
-    def __init__(self, actor_distance, actor_angle, critic, level):
+    def __init__(self, level):
         #self.BARRIERRADIUS = 0.06
         #self.ROBOTRADIUS = 0.15
         #self.W = 2 * self.ROBOTRADIUS
@@ -24,9 +24,7 @@ class game():
         
         state_size = 25
         self.level = level
-        self.actor_distance = actor_distance
-        self.actor_angle = actor_angle
-        self.critic = critic
+        
         self.transform = transforms.Compose([
             transforms.ToPILImage(),
             transforms.Resize(state_size),
