@@ -239,7 +239,7 @@ class game():
             reward = -1000
             done = 1
         if self.playerHasRichDestiny():
-             reward = +10000
+             reward = +1000
              done = 1
         self.updateDisplay() 
         n_s = self.getState()
@@ -282,6 +282,9 @@ class game():
         
             
 if __name__ == '__main__':
-    main()
+    n_iters = 100000# input('number of iteration? ')
+    
+    import cart_pole_PT_AC
+    cart_pole_PT_AC.main(n_iters = 10000)
 
 

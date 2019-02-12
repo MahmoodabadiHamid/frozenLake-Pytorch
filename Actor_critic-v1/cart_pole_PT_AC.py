@@ -14,89 +14,65 @@ import torch.nn.functional as F
 from torch.distributions import Normal
 
 
-device = "cpu"#torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 #env = gym.make("CartPole-v0").unwrapped
 
 state_size = 1*36
 #env.observation_space.shape[0]
 action_size = 2#env.action_space.n
-lr = 0.1e-2
 
+class ActorCritic(torch.nn.Module):
+    def __init__(self, input_shape, actor_shape, critic_shape, device=torch.device("cpu")):
+        """
+        Deep convolutional Neural Network to represent both policy  (Actor) and a value function (Critic).
+        The Policy is parametrized using a Gaussian distribution with mean mu and variance sigma
+        The Actor's policy parameters (mu, sigma) and the Critic's Value (value) are output by the deep CNN implemented
+        in this class.
+        :param input_shape: Shape of each of the observations
+        :param actor_shape: Shape of the actor's output. Typically the shape of the actions
+        :param critic_shape: Shape of the Critic's output. Typically 1
+        :param device: The torch.device (cpu or cuda) where the inputs and the parameters are to be stored and operated
+        """
+        super(ActorCritic, self).__init__()
+        self.device = device
+		
+		
+        self.layer1 = torch.nn.Sequential(nn.Conv2d(1, 1, kernel_size=5, padding=2),
+                                          torch.nn.ReLU())
+        self.layer2 = torch.nn.Sequential(nn.Conv2d(1, 1, kernel_size=5, padding=2),
+                                          torch.nn.ReLU())
+        self.layer3 = torch.nn.Sequential(nn.Conv2d(1, 1, kernel_size=5, padding=2),
+                                          torch.nn.ReLU())
+										  
+										  
+        self.layer4 = torch.nn.Sequential(torch.nn.Linear(625, 512),
+                                          torch.nn.ReLU())
+										  
+        self.actor_mu = torch.nn.Linear(512, actor_shape)
+        self.actor_sigma = torch.nn.Linear(512, actor_shape)
+        self.critic = torch.nn.Linear(512, critic_shape)
 
-class Convolution(nn.Module):
-    def __init__(self):
-        super(Convolution, self).__init__()
-        #_____________ Starting CNN Layer ___________________________
+    def forward(self, x):
+        """
+        Forward pass through the Actor-Critic network. Takes batch_size x observations as input and produces
+        mu, sigma and the value estimate
+        as the outputs
+        :param x: The observations
+        :return: Mean (actor_mu), Sigma (actor_sigma) for a Gaussian policy and the Critic's value estimate (critic)
+        """
+        x.requires_grad_()
+        x = x.to(self.device)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
         
-        self.layer1 = nn.Sequential(
-                nn.Conv2d(1, 1, kernel_size=5, padding=2),
-                #nn.BatchNorm2d(1),
-                #nn.ReLU(),
-                nn.MaxPool2d(2)).to(device)
-
-        self.layer2 = nn.Sequential(
-                nn.Conv2d(1, 1, kernel_size=5, padding=2),
-                nn.BatchNorm2d(1),
-                #nn.ReLU(),
-                nn.MaxPool2d(2)).to(device)
-
-        
-        #_____________ End of Conv Layer definition ___________________________
-    def forward(self, state):
-        
-        #state = self.transform(state.squeeze())
-        #print('here')
-        #print(type(state))
-        
-        state=state.to(device)
-        conv1 = self.layer1(state)
-        conv2 = self.layer2(conv1)
-        state = conv2.view(1, -1)
-        return state
-
-class Actor(nn.Module):
-    def __init__(self, state_size, action_size):
-        super(Actor, self).__init__()
-        self.state_size = state_size
-        self.action_size = action_size
-        
-        self.linear1 = nn.Linear(self.state_size, 18).to(device)
-        self.linear2 = nn.Linear(18, 9).to(device)
-        self.linear3 = nn.Linear(9, self.action_size).to(device)
-
-    def forward(self, state):
-       
-        output1 = F.relu(self.linear1(state))
-        output2 = F.relu(self.linear2(output1))
-        output3 = self.linear3(output2)[0]
-        
-        mu = output3[0]
-        sigma = output3[1]
-        
-        #print('aaa')
-        #input(output)
-        #distribution_distance = torch.normal(mu1, sigma1)
-        #distribution_angle = torch.normal(mu2, sigma2)
-        #distribution = Normal(torch.Tensor([0.0]),torch.Tensor([1.0]))
-        return mu, sigma #distribution_distance, distribution_angle
-
-
-class Critic(nn.Module):
-    def __init__(self, state_size, action_size):
-        super(Critic, self).__init__()
-        self.state_size = state_size
-        self.action_size = action_size
-        
-        self.linear1 = nn.Linear(self.state_size, 18).to(device)
-        self.linear2 = nn.Linear(18, 9).to(device)
-        self.linear3 = nn.Linear(9, 1).to(device)
-
-    def forward(self, state):
-        output1 = F.relu(self.linear1(state))
-        output2 = F.relu(self.linear2(output1))
-        value   = self.linear3(output2)
-        return value
+        x = x.view(x.shape[0], -1)
+        x = self.layer4(x)
+        actor_mu = self.actor_mu(x)
+        actor_sigma = self.actor_sigma(x)
+        critic = self.critic(x)
+        return actor_mu[0], actor_sigma[0], critic
 
 
 def compute_returns(next_value, rewards, masks, gamma=0.99):
@@ -114,13 +90,32 @@ def compute_returns(next_value, rewards, masks, gamma=0.99):
     return returns
 
 
-def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
-    optimizerActorDistance = optim.Adam(actor_distance.parameters(), lr = 0.01)
-    optimizerActorAngle = optim.Adam(actor_angle.parameters(), lr = 0.01)
-    optimizerC = optim.Adam(critic.parameters(), lr = 0.01)
+def main(n_iters):
+    path = ''#input('input path: ')
+    NUM_OF_RRT_ITER = 0
+    NUM_OF_RRT_EPOCH = 10
+    
+    if os.path.exists(str(path)+'ac.pkl'):
+        ac = torch.load(str(path)+'ac.pkl').to(device)
+        print('ac Model loaded')
+    else:
+        ac = ActorCritic(state_size,2 ,1  ,device = device).to(device)
+        print('ac Model created')
+        
+ 
+    env =  gameEnv.game(level = 'EASY')
+    #env.FPS = 200
+    for k in range(NUM_OF_RRT_ITER):
+        print('RRT Iteration: ',str(k))
+        #rrt_obj = rrt.RRT(env, actor_distance, actor_angle, convolution)
+        #actor_distance, actor_angle, convolution = rrt_obj.runRRT(NUM_OF_RRT_EPOCH, path)
+    print('RRT training has been done!')
+    env.FPS = 24
+    optimizer = optim.Adam(ac.parameters(), lr = 0.01)
+    #optimizerActorAngle = optim.Adam(actor_angle.parameters(), lr = 0.01)
+    #optimizerC = optim.Adam(critic.parameters(), lr = 0.01)
     cum_rewards = []
     all_avg_cum_rewards = []
-    avg_cum_rewards = [0]
         
     for i in range(n_iters):
         #state = (env.getState())
@@ -141,14 +136,9 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
             
             #env.render()
             
-            state = convolution(state)
-            state = ((state).to(device))
+            actor_mu, actor_sigma, critic = ac(state)
+            mu1, mu2, sigma1, sigma2, value = actor_mu[0], actor_mu[1] , actor_sigma[0], actor_sigma[1], critic
             
-            
-            mu1,sigma1 = actor_distance(state)
-            mu2,sigma2 = actor_angle(state)
-            
-            value = critic(state)
             #action = dist.sample()
             
             #print('dsf ',dist.log_prob(action).unsqueeze(0))
@@ -210,8 +200,12 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
         cum_reward = 0
         
         
-        next_state = ((convolution(next_state)))
-        next_value = critic(next_state.to(device))
+        #next_state = ((convolution(next_state)))
+        #next_value = critic(next_state.to(device))
+        
+        _, _, next_value = ac(next_state)
+        
+        
         returns = compute_returns(next_value, rewards, masks)
         #log_probs = torch.tensor(log_probs)
         #print(log_probs)
@@ -233,7 +227,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
             #print("advantage",advantage.detach())
             actor_angle_loss = -(log_probs_angle * advantage.detach()).mean().to(device)
             critic_loss = advantage.pow(2).mean().to(device)
-    
+            loss_average = (critic_loss + actor_angle_loss + actor_distance_loss)/3
             #print('actorloss', actor_loss)
             #input()
             #actor_loss = Variable(actor_loss , requires_grad = True)
@@ -242,23 +236,14 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
             #actor_loss = torch.tensor(actor_loss, requires_grad=True)
             #critic_loss = torch.tensor(critic_loss, requires_grad=True)
             
-            optimizerActorDistance.zero_grad()
-            optimizerActorAngle.zero_grad()
-            optimizerC.zero_grad()
+            optimizer.zero_grad()
+            loss_average.backward(retain_graph=True)
+            optimizer.step()
             
-            actor_distance_loss.backward(retain_graph=True)
-            actor_angle_loss.backward(retain_graph=True)
+            env =  gameEnv.game( level = 'EASY')
             
-            critic_loss.backward(retain_graph=True)
-            optimizerActorDistance.step()
-            optimizerActorAngle.step()
-            optimizerC.step()
-            env =  gameEnv.game(actor_distance, actor_angle, critic, level = 'EASY')
-            
-            torch.save(actor_distance, str(path)+'actor_distance.pkl')
-            torch.save(actor_angle, str(path)+'actor_angle.pkl')
-            torch.save(critic, str(path)+'critic.pkl')
-            torch.save(convolution.to(device), str(path)+'convolution.pkl')
+            torch.save(ac, str(path)+'ac.pkl')
+ 
             
             
             #print(critic_loss)
@@ -270,8 +255,11 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
             #for param in actor_distance.parameters():
             #    print(param.grad)
             #input()
-        except:
-            env =  gameEnv.game(actor_distance, actor_angle, critic, level = 'EASY')
+        except Exception as e:
+            print(str(e))
+            input()
+            
+            env =  gameEnv.game(level = 'EASY')
             print("something wrong happened")
         
         #avg_cum_rewards.append(sum(cum_rewards[-10:-1])/len(cum_rewards[-10:-1]))
@@ -290,47 +278,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
 
 
 if __name__ == '__main__':
-    print('version 2')
-    path = ''#input('input path: ')
-    NUM_OF_RRT_ITER = 0
-    NUM_OF_RRT_EPOCH = 10
-    
-    if os.path.exists(str(path)+'actor_distance.pkl'):
-        actor_distance = torch.load(str(path)+'actor_distance.pkl').to(device)
-        print('actor_distance Model loaded')
-    else:
-        actor_distance = Actor(state_size, action_size).to(device)
-        print('actor_distance Model created')
-        
-    if os.path.exists(str(path)+'actor_angle.pkl'):
-        actor_angle = torch.load(str(path)+'actor_angle.pkl').to(device)
-        print('actor_angle Model loaded')
-    else:
-        actor_angle = Actor(state_size, action_size).to(device)
-        print('actor_angle Model created')
-        
-    if os.path.exists(str(path)+'critic.pkl'): 
-        critic = torch.load(str(path)+'critic.pkl').to(device)
-        print('Critic Model loaded')
-    else:
-        critic = Critic(state_size, action_size=1).to(device)
-        print('Critic Model created')
-    if os.path.exists(str(path)+'convolution.pkl'):
-        convolution = torch.load(str(path)+'convolution.pkl').to(device)
-        print('convolution Model loaded')
-    else:
-        convolution = Convolution().to(device)
-        print('convolution Model created')
-    
-    env =  gameEnv.game(actor_distance, actor_angle, critic, level = 'EASY')
-    #env.FPS = 200
-    for k in range(NUM_OF_RRT_ITER):
-        print('RRT Iteration: ',str(k))
-        #rrt_obj = rrt.RRT(env, actor_distance, actor_angle, convolution)
-        #actor_distance, actor_angle, convolution = rrt_obj.runRRT(NUM_OF_RRT_EPOCH, path)
-        
-    env.FPS = 24
     n_iters = 100000# input('number of iteration? ')
-    print('RRT training has been done!')
-    main(actor_distance, actor_angle, critic, convolution, env, int(n_iters))
+    
+    main( int(n_iters))
 
