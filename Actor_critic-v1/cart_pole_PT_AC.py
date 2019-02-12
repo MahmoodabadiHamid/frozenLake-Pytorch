@@ -23,57 +23,44 @@ state_size = 1*36
 action_size = 2#env.action_space.n
 
 class ActorCritic(torch.nn.Module):
-    def __init__(self, input_shape, actor_shape, critic_shape, device=torch.device("cpu")):
-        """
-        Deep convolutional Neural Network to represent both policy  (Actor) and a value function (Critic).
-        The Policy is parametrized using a Gaussian distribution with mean mu and variance sigma
-        The Actor's policy parameters (mu, sigma) and the Critic's Value (value) are output by the deep CNN implemented
-        in this class.
-        :param input_shape: Shape of each of the observations
-        :param actor_shape: Shape of the actor's output. Typically the shape of the actions
-        :param critic_shape: Shape of the Critic's output. Typically 1
-        :param device: The torch.device (cpu or cuda) where the inputs and the parameters are to be stored and operated
-        """
-        super(ActorCritic, self).__init__()
-        self.device = device
-		
-		
+    def __init__(self , enc_in ):
+        super(ActorCritic, self).__init__( )
+        lstm_out = 256
+        lstm_in = lstm_out
+        
+        enc_in = 3 # for pendulum
+        enc_hidden = 200
+        enc_out = lstm_in
         self.layer1 = torch.nn.Sequential(nn.Conv2d(1, 1, kernel_size=5, padding=2),
                                           torch.nn.ReLU())
         self.layer2 = torch.nn.Sequential(nn.Conv2d(1, 1, kernel_size=5, padding=2),
                                           torch.nn.ReLU())
         self.layer3 = torch.nn.Sequential(nn.Conv2d(1, 1, kernel_size=5, padding=2),
                                           torch.nn.ReLU())
-										  
-										  
-        self.layer4 = torch.nn.Sequential(torch.nn.Linear(625, 512),
-                                          torch.nn.ReLU())
-										  
-        self.actor_mu = torch.nn.Linear(512, actor_shape)
-        self.actor_sigma = torch.nn.Linear(512, actor_shape)
-        self.critic = torch.nn.Linear(512, critic_shape)
-
-    def forward(self, x):
-        """
-        Forward pass through the Actor-Critic network. Takes batch_size x observations as input and produces
-        mu, sigma and the value estimate
-        as the outputs
-        :param x: The observations
-        :return: Mean (actor_mu), Sigma (actor_sigma) for a Gaussian policy and the Critic's value estimate (critic)
-        """
+        
+        self.fc_enc_in  = nn.Linear(625,enc_hidden) # enc_input_layer
+        self.fc_enc_out  = nn.Linear(enc_hidden,enc_out) # enc_output_layer
+        self.lstm = nn.LSTMCell(lstm_in, lstm_out)
+        self.actor_mu = nn.Linear(lstm_out, 1)
+        self.actor_sigma = nn.Linear(lstm_out, 1)
+        self.critic_linear = nn.Linear(lstm_out, 1)   
+        self.train()  
+        
+    def forward(self, inputs):
+        
+        x, (hx, cx) = inputs
+        
         x.requires_grad_()
         x = x.to(self.device)
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
         
-        x = x.view(x.shape[0], -1)
-        x = self.layer4(x)
-        actor_mu = self.actor_mu(x)
-        actor_sigma = self.actor_sigma(x)
-        critic = self.critic(x)
-        return actor_mu[0], actor_sigma[0], critic
-
+        x = F.relu(self.fc_enc_in(x))
+        x = self.fc_enc_out(x)
+        hx, cx = self.lstm(x, (hx, cx))
+        x = hx
+        return self.critic_linear(x), self.actor_mu(x), self.actor_sigma(x), (hx, cx)
 
 def compute_returns(next_value, rewards, masks, gamma=0.99):
     #rewards=rewards.to(device)
@@ -95,6 +82,7 @@ def main(n_iters):
     NUM_OF_RRT_ITER = 0
     NUM_OF_RRT_EPOCH = 10
     
+
     if os.path.exists(str(path)+'ac.pkl'):
         ac = torch.load(str(path)+'ac.pkl').to(device)
         print('ac Model loaded')
