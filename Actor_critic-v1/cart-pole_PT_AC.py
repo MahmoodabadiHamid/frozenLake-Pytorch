@@ -14,14 +14,14 @@ import torch.nn.functional as F
 from torch.distributions import Normal
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = "cpu"#torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 #env = gym.make("CartPole-v0").unwrapped
 
 state_size = 1*36
 #env.observation_space.shape[0]
 action_size = 2#env.action_space.n
-lr = 0.1e-3
+lr = 0.1e-2
 
 
 class Convolution(nn.Module):
@@ -115,10 +115,12 @@ def compute_returns(next_value, rewards, masks, gamma=0.99):
 
 
 def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
-    optimizerActorDistance = optim.Adam(actor_distance.parameters())
-    optimizerActorAngle = optim.Adam(actor_angle.parameters())
-    optimizerC = optim.Adam(critic.parameters())
+    optimizerActorDistance = optim.Adam(actor_distance.parameters(), lr = 0.01)
+    optimizerActorAngle = optim.Adam(actor_angle.parameters(), lr = 0.01)
+    optimizerC = optim.Adam(critic.parameters(), lr = 0.01)
     cum_rewards = []
+    all_avg_cum_rewards = []
+    avg_cum_rewards = [0]
         
     for i in range(n_iters):
         #state = (env.getState())
@@ -271,12 +273,14 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
         except:
             env =  gameEnv.game(actor_distance, actor_angle, critic, level = 'EASY')
             print("something wrong happened")
-       
-        #avg_cum_rewards = [(((cum_rewards[i]) + (cum_rewards[i]-1) + (cum_rewards[i]-2) + (cum_rewards[i]-3) + (cum_rewards[i]-4))/5) for i in range(len(cum_rewards))]
         
-        plt.plot(list(range(0, len(cum_rewards))),cum_rewards)
-        #plt.plot(list(range(0, len(avg_cum_rewards))),avg_cum_rewards)
+        #avg_cum_rewards.append(sum(cum_rewards[-10:-1])/len(cum_rewards[-10:-1]))
+        #avg_cum_rewards.append(sum(cum_rewards)/len(cum_rewards))
+        all_avg_cum_rewards.append(sum(cum_rewards)/len(cum_rewards))
         
+        #plt.plot(list(range(0, len(avg_cum_rewards))),avg_cum_rewards, '-r', label = 'reward average')
+        plt.plot(list(range(0, len(all_avg_cum_rewards ))),all_avg_cum_rewards , '-b', label = 'reward average')
+        plt.plot(list(range(0, len(cum_rewards))),cum_rewards, '-g', label = 'reward per game')
         plt.savefig('Reward Plot')
         plt.show()
     #print(len(cum_rewards))
