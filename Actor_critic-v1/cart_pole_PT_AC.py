@@ -12,7 +12,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.distributions import Normal
-
+#plt.figure(figsize=(1,1))
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 #env = gym.make("CartPole-v0").unwrapped
@@ -199,6 +199,7 @@ def main(n_iters):
                 break
         print('cum_reward: ', cum_reward)
         cum_rewards.append(cum_reward)
+        print('all avg reward: ' + str(sum(cum_rewards)/len(cum_rewards)))
         cum_reward = 0
         
         
