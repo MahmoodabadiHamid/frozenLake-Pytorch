@@ -13,6 +13,7 @@ import math
 class game():
     
     def __init__(self, level):
+        pygame.init()
         #self.BARRIERRADIUS = 0.06
         #self.ROBOTRADIUS = 0.15
         #self.W = 2 * self.ROBOTRADIUS
@@ -21,6 +22,8 @@ class game():
         #self.k = 160 # pixels per metre for graphics
         #self.x = PLAYFIELDCORNERS[0] - 0.5
         #self.y = 0.0
+        
+        
         
         state_size = 25
         self.level = level
@@ -42,7 +45,7 @@ class game():
         self.winW = 600
         self.winH = 600
         self.bgColor = (0, 0, 0)
-        self.FPS = 24
+        self.FPS = 80
         self.obstacleMinSiz = 20
         self.obstacleMaxSiz = 40
         self.destinyMinSiz = 60
@@ -53,8 +56,9 @@ class game():
 
         self.obstacleAddRate = 100
         self.playerMoveRate = 10
-        pygame.init()
+        
         self.mainClock = pygame.time.Clock()
+        self.mainClock.tick(self.FPS)
         self.windowSurface = pygame.display.set_mode((self.winW, self.winH))
         self.baddies = []
         self.destiny = []
@@ -154,7 +158,8 @@ class game():
         
 
     def getState(self):
-        self.mainClock.tick(self.FPS)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
         
         state = pygame.surfarray.array3d(pygame.display.get_surface())
         #if (random.randint(0,100) == 2):
@@ -163,7 +168,7 @@ class game():
         state = state.transpose((2, 0, 1))
         state = np.ascontiguousarray(state, dtype=np.float32) 
         state = torch.from_numpy(state)
-        state = self.transform(state).unsqueeze(0)#.to('cuda')
+        state = self.transform(state).unsqueeze(0).to(device)
         
         #plt.imshow(state)
         #plt.show()
