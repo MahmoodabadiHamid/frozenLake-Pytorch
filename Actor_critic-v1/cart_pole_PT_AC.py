@@ -24,11 +24,11 @@ action_size = 2#env.action_space.n
 class ActorCritic(torch.nn.Module):
     def __init__(self , enc_in ):
         super(ActorCritic, self).__init__( )
-        lstm_out = 256
+        lstm_out = 16
         lstm_in = lstm_out
         
         enc_in = 6*6  # for pendulum
-        enc_hidden = 200
+        enc_hidden = 32
         enc_out = lstm_in
         self.layer1 = torch.nn.Sequential(nn.Conv2d(1, 1, kernel_size=5, padding=2),
                                           #torch.nn.LeakyReLU(),
@@ -131,8 +131,8 @@ def main(n_iters):
             
             #env.render()
             if done:
-                cx = (Variable(torch.zeros(1, 256))).to(device)
-                hx = (Variable(torch.zeros(1, 256))).to(device)
+                cx = (Variable(torch.zeros(1, 16))).to(device)
+                hx = (Variable(torch.zeros(1, 16))).to(device)
                 done = False
             else:
                 cx = Variable(cx.data).to(device)
