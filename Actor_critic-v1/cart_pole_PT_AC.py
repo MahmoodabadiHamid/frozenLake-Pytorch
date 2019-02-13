@@ -104,7 +104,7 @@ def main(n_iters):
         #actor_distance, actor_angle, convolution = rrt_obj.runRRT(NUM_OF_RRT_EPOCH, path)
     print('RRT training has been done!')
     #env.FPS = 24
-    optimizer = optim.Adam(ac.parameters(), lr = 0.01)
+    optimizer = optim.Adam(ac.parameters(), lr = 0.001)
     #optimizerActorAngle = optim.Adam(actor_angle.parameters(), lr = 0.01)
     #optimizerC = optim.Adam(critic.parameters(), lr = 0.01)
     cum_rewards = []
@@ -267,18 +267,18 @@ def main(n_iters):
         all_avg_cum_rewards.append(sum(cum_rewards)/len(cum_rewards))
         
         #plt.plot(list(range(0, len(avg_cum_rewards))),avg_cum_rewards, '-r', label = 'reward average')
+        
+        plt.figure(figsize=(20,5))
         plt.plot(list(range(0, len(all_avg_cum_rewards ))),all_avg_cum_rewards , '-b', label = 'reward average')
         plt.plot(list(range(0, len(cum_rewards))),cum_rewards, '-g', label = 'reward per game')
         plt.savefig('Reward Plot')
         plt.show()
-    #print(len(cum_rewards))
-    plt.plot(list(range(0, len(cum_rewards))),cum_rewards)
-    plt.show()
-    #env.close()
+
+    
 
 
 if __name__ == '__main__':
-    n_iters = 100000# input('number of iteration? ')
+    n_iters = 100000
     
     main( int(n_iters))
 
