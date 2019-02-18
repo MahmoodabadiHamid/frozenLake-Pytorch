@@ -24,47 +24,52 @@ action_size = 2#env.action_space.n
 class ActorCritic(torch.nn.Module):
     def __init__(self , enc_in ):
         super(ActorCritic, self).__init__( )
-        lstm_out = 16
-        lstm_in = lstm_out
         
-        enc_in = 6*6  # for pendulum
-        enc_hidden = 32
-        enc_out = lstm_in
-        self.layer1 = torch.nn.Sequential(nn.Conv2d(1, 1, kernel_size=5, padding=2),
-                                          #torch.nn.LeakyReLU(),
+        enc_in = 9 * 4  # for pendulum
+        enc_hidden = 8
+        enc_out = 4
+        self.conv1 = torch.nn.Sequential(nn.Conv2d(1, 1, kernel_size=5, padding=2),
+                                          torch.nn.LeakyReLU(),
                                           nn.MaxPool2d(2))
-        self.layer2 = torch.nn.Sequential(nn.Conv2d(1, 1, kernel_size=5, padding=2),
+        self.conv2 = torch.nn.Sequential(nn.Conv2d(1, 1, kernel_size=5, padding=2),
+                                          #torch.nn.LeakyReLU(),
+                                          #nn.BatchNorm2d(1),
+                                          nn.MaxPool2d(2))
+        self.conv3 = torch.nn.Sequential(nn.Conv2d(1, 1, kernel_size=5, padding=2),
                                           torch.nn.LeakyReLU(),
                                           #nn.BatchNorm2d(1),
                                           nn.MaxPool2d(2))
-  
+       
+        
         
         self.fc_enc_in  = nn.Linear(enc_in,enc_hidden) # enc_input_layer
         self.fc_enc_out  = nn.Linear(enc_hidden,enc_out) # enc_output_layer
-        self.lstm = nn.LSTMCell(lstm_in, lstm_out)
-        self.actor_mu = nn.Linear(lstm_out, 2)
-        self.actor_sigma = nn.Linear(lstm_out, 2)
-        self.critic_linear = nn.Linear(lstm_out, 1)   
+        
+        self.actor_mu = nn.Linear(enc_out, 2)
+        self.actor_sigma = nn.Linear(enc_out, 2)
+        self.critic_linear = nn.Linear(enc_out, 1)   
+        self.state = torch.zeros([1, 9*4], dtype=torch.float32).to(device)
+        self.state.requires_grad_()
         self.train()  
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
         
     def forward(self, inputs):
         
-        x, (hx, cx) = inputs
+        x = inputs
         
         x.requires_grad_()
-        x = x.to(self.device)
-        #print(x.shape)
-        x = self.layer1(x)
-        x = self.layer2(x)
-        #x = self.layer3(x)
-        #input(x.shape)
+        x = x.to(device)
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.conv3(x)
         x = x.view(x.shape[0], -1)
-        x = F.relu(self.fc_enc_in(x))
+        #print(x.shape)
+        self.state = torch.cat((x, self.state), 1)
+        self.state = self.state[:,x.shape[1]:]
+
+        x = F.relu(self.fc_enc_in(self.state))
         x = self.fc_enc_out(x)
-        hx, cx = self.lstm(x, (hx, cx))
-        x = hx
-        return self.actor_mu(x)[0], self.actor_sigma(x)[0], self.critic_linear(x) , (hx, cx)
+        return self.actor_mu(x)[0], self.actor_sigma(x)[0], self.critic_linear(x) 
                   
 
 def compute_returns(next_value, rewards, masks, gamma=0.99):
@@ -123,34 +128,40 @@ def main(n_iters):
 
         #for i in count():
         cum_reward = 0
-        done = True
+        done = False
+        distance_avarage = 1
         while True :
             e = pygame.event.get()
-            #env.updateDisplay()
+            env.state = torch.zeros([1, 36*4], dtype=torch.float32).to(device)
             state = (env.getState().to(device))
             
-            #env.render()
-            if done:
-                cx = (Variable(torch.zeros(1, 16))).to(device)
-                hx = (Variable(torch.zeros(1, 16))).to(device)
-                done = False
-            else:
-                cx = Variable(cx.data).to(device)
-                hx = Variable(hx.data).to(device)
-                
-            actor_mu, actor_sigma, critic, (hx, cx) = ac((Variable(state), (hx, cx)))
+            #input(state.shape)
+            
+            actor_mu, actor_sigma, critic = ac(state)
             mu1, mu2, sigma1, sigma2, value = actor_mu[0], actor_mu[1] , actor_sigma[0], actor_sigma[1], critic
             
-            #action = dist.sample()
+            #print(mu1, mu2)
+            #print(sigma1, sigma2)
             
-            #print('dsf ',dist.log_prob(action).unsqueeze(0))
+            if sigma1 < 0:
+                sigma1 *= -1
+            if sigma2 < 0:
+                sigma2 *= -1
+            
+            if mu1 < 0:
+                mu1 *= -1
+            if mu2 < 0:
+                mu2 += 360
+            if mu2 > 360:
+                mu2  -=  360
+            
+
             normal_dist_distance = Normal(mu1, sigma1)
             normal_dist_angle = Normal(mu2, sigma2)
 
             distance = normal_dist_distance.sample()
             angle    = normal_dist_angle.sample()
             
-
             #log_prob_distance = torch.log(torch.pow( torch.sqrt(2. * sigma1 * np.pi) , -1)) - (normal_dist_distance - mu1)*(normal_dist_distance - mu1)*torch.pow((2. * sigma1), -1)
             log_prob_distance = normal_dist_distance.log_prob(distance).unsqueeze(0)
             log_prob_angle = normal_dist_angle.log_prob(angle).unsqueeze(0)
@@ -168,7 +179,7 @@ def main(n_iters):
             log_probs_angle.append(log_prob_angle )
             
             
-            next_state, reward, done, _ = env.step(distance, angle)
+            next_state, reward, done, distance_avarage,_ = env.step(distance, angle, distance_avarage)
 
             cum_reward += reward
             #print(cum_reward)
@@ -206,7 +217,7 @@ def main(n_iters):
         #next_state = ((convolution(next_state)))
         #next_value = critic(next_state.to(device))
         
-        _, _, next_value, _ = ac((Variable(next_state), (hx, cx)))
+        _, _, next_value = ac(((next_state)))
         
         
         returns = compute_returns(next_value, rewards, masks)
@@ -230,6 +241,7 @@ def main(n_iters):
             #print("advantage",advantage.detach())
             actor_angle_loss = -(log_probs_angle * advantage.detach()).mean().to(device)
             critic_loss = advantage.pow(2).mean().to(device)
+            
             loss_average = (critic_loss + actor_angle_loss + actor_distance_loss)/3
             #print('actorloss', actor_loss)
             #input()
@@ -242,12 +254,12 @@ def main(n_iters):
             optimizer.zero_grad()
             loss_average.backward(retain_graph=True)
             optimizer.step()
-            
+            #for param in ac.parameters():
+                #print(param.grad.data.clamp_(-1, 1))
             env =  gameEnv.game( level = 'EASY')
             
             torch.save(ac, str(path)+'ac.pkl')
  
-            
             
             #print(critic_loss)
             #print(actor_distance_loss)
@@ -280,5 +292,6 @@ def main(n_iters):
 if __name__ == '__main__':
     n_iters = 100000
     
+
     main( int(n_iters))
 

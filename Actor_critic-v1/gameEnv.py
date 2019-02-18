@@ -159,17 +159,18 @@ class game():
 
     def getState(self):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        
-        
         state = pygame.surfarray.array3d(pygame.display.get_surface())
+       
         #if (random.randint(0,100) == 2):
             #plt.imshow(state)
             #plt.show()
         state = state.transpose((2, 0, 1))
+        
         state = np.ascontiguousarray(state, dtype=np.float32) 
+
         state = torch.from_numpy(state)
         state = self.transform(state).unsqueeze(0).to(device)
-        
+        state=state*1000
         #plt.imshow(state)
         #plt.show()
         return state
@@ -218,38 +219,32 @@ class game():
         return returns
 
 
-    def step(self, distance, angle):
-        reward =-1
+    def step(self, distance, angle, distance_avarage):
+        reward =float(-distance_avarage/1000)
         done = 0
-        epsilon = 0.1#random.uniform(0,1)
-        #print(action)
-        self.angle = (1/((angle)))
-        self.playerMoveRate =  (1/(distance))
+        epsilon = 0.1
+        self.angle = (((angle)))
+        self.playerMoveRate =  ((distance))
         
-        #print(self.angle)
-        #print(self.playerMoveRate)
-        self.playerRect.x += (self.playerMoveRate + epsilon)#(math.sin(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
-        self.playerRect.y += (math.cos(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
-        
-        #self.playerRect.move_ip(math.sin(self.angle) * self.playerMoveRate,0)
-        #self.playerRect.move_ip(0, math.cos(self.angle)* self.playerMoveRate)
+        self.playerRect.x += (math.sin(self.angle) ) * (self.playerMoveRate )
+        self.playerRect.y += (math.cos(self.angle) ) * (self.playerMoveRate )
         
         if (self.playerRect.top > self.winH or self.playerRect.top < 0 or self.playerRect.left > self.winW or self.playerRect.left < 0):
-            reward = -10
-            done = 0
-            self.playerRect.x -= (self.playerMoveRate + epsilon)+1#(math.sin(self.angle) + epsilon) * (self.playerMoveRate + epsilon)
-            self.playerRect.y -= (math.cos(self.angle) + epsilon) * (self.playerMoveRate + epsilon)+1
-        
+            reward = float(-distance_avarage)
+            done = 1
+
         if self.playerHasHitBaddie():
-            reward = -1000
+            reward = float(-distance_avarage)
             done = 1
         if self.playerHasRichDestiny():
-             reward = +1000
+             reward = + float(distance_avarage)
              done = 1
         self.updateDisplay() 
         n_s = self.getState()
-         
-        return n_s, reward, done, 'info'
+        distance_avarage += distance
+        return n_s, reward, done, distance_avarage, 'info'
+
+
 
     def updateDisplay(self):
         self.bgColor = (0, 0, 0)
