@@ -38,8 +38,8 @@ class game():
         self.baddieImage = pygame.image.load('files/baddie.jpg')
         self.destinyImage = pygame.image.load('files/destiny.png')
         self.playerRect = self.playerImage.get_rect()
-        self.playerRect.x = 500
-        self.playerRect.y = 500
+        self.playerRect.x = random.randint(0,550)
+        self.playerRect.y = random.randint(0,550)
         
         #print('player ', self.playerRect)
         self.winW = 600
@@ -170,7 +170,7 @@ class game():
 
         state = torch.from_numpy(state)
         state = self.transform(state).unsqueeze(0).to(device)
-        state=state*1000
+        state=state*10000
         #plt.imshow(state)
         #plt.show()
         return state
@@ -220,7 +220,7 @@ class game():
 
 
     def step(self, distance, angle, distance_avarage):
-        reward =float(-distance_avarage/1000)
+        reward =float(-distance_avarage/10000)
         done = 0
         epsilon = 0.1
         self.angle = (((angle)))
