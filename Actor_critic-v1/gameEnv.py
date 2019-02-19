@@ -40,7 +40,8 @@ class game():
         self.playerRect = self.playerImage.get_rect()
         self.playerRect.x = random.randint(0,550)
         self.playerRect.y = random.randint(0,550)
-        
+        #print(self.playerRect)
+        #input()
         #print('player ', self.playerRect)
         self.winW = 600
         self.winH = 600
@@ -219,8 +220,8 @@ class game():
         return returns
 
 
-    def step(self, distance, angle, distance_avarage):
-        reward =float(-distance_avarage/10000)
+    def step(self, distance, angle):
+        reward =(-distance)
         done = 0
         epsilon = 0.1
         self.angle = (((angle)))
@@ -230,19 +231,19 @@ class game():
         self.playerRect.y += (math.cos(self.angle) ) * (self.playerMoveRate )
         
         if (self.playerRect.top > self.winH or self.playerRect.top < 0 or self.playerRect.left > self.winW or self.playerRect.left < 0):
-            reward = float(-distance_avarage)
+            reward = float(-distance-1000)
             done = 1
 
         if self.playerHasHitBaddie():
-            reward = float(-distance_avarage)
+            reward = (-distance-1000)
             done = 1
         if self.playerHasRichDestiny():
-             reward = + float(distance_avarage)
+             reward = (distance+1000)
              done = 1
         self.updateDisplay() 
         n_s = self.getState()
-        distance_avarage += distance
-        return n_s, reward, done, distance_avarage, 'info'
+        #distance_cum += distance
+        return n_s, reward, done, 'info'
 
 
 

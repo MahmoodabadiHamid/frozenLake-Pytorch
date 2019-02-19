@@ -24,10 +24,11 @@ class ActorCritic(torch.nn.Module):
         
         enc_in = 9 * 4 
         enc_out = 18
+        
         dec_in = enc_out 
         dec_out = 9
         
-        last_layer_fc_out = 18
+        last_layer_fc_out = 36
         
         self.conv1 = torch.nn.Sequential(nn.Conv2d(1, 1, kernel_size=5, padding=2),
                                           torch.nn.LeakyReLU(),
@@ -43,17 +44,17 @@ class ActorCritic(torch.nn.Module):
        
         
         
-        self.fc_enc  = nn.Linear(enc_in,dec_out) # enc_input_layer
+        self.fc_enc  = nn.Linear(enc_in,enc_out) # enc_input_layer
         
         
-        self.actor_mu_dec   =nn.Linear(dec_out, last_layer_fc_out)
+        self.actor_mu_dec   =nn.Linear(dec_in, last_layer_fc_out)
         self.actor_mu = nn.Linear(last_layer_fc_out, 2)
         
-        self.actor_sigma_dec= nn.Linear(dec_out, last_layer_fc_out)
+        self.actor_sigma_dec= nn.Linear(dec_in, last_layer_fc_out)
         self.actor_sigma = nn.Linear(last_layer_fc_out, 2)
         
         
-        self.critic_dec     = nn.Linear(dec_out, last_layer_fc_out)
+        self.critic_dec     = nn.Linear(dec_in, last_layer_fc_out)
         self.critic_linear = nn.Linear(last_layer_fc_out, 1)
         
         
@@ -119,13 +120,21 @@ def main(n_iters):
         #rrt_obj = rrt.RRT(env, actor_distance, actor_angle, convolution)
         #actor_distance, actor_angle, convolution = rrt_obj.runRRT(NUM_OF_RRT_EPOCH, path)
     print('RRT training has been done!')
-    optimizer = optim.Adam(ac.parameters(), lr = 0.0001)
-
+    lr = .01
+    optimizer = optim.Adam(ac.parameters(), lr = lr)
+    
     cum_rewards = []
     all_avg_cum_rewards = []
         
-    for i in range(n_iters):
+    for i in range(1, n_iters):
         
+        if (i % 100 == 0):
+            print(i)
+            print(lr)
+            lr = float("{0:.3f}".format(lr*0.9))
+            print('lr: ', str(lr))
+            optimizer = optim.Adam(ac.parameters(), lr = lr)
+            
         log_probs_distance = []
         log_probs_angle = []
         values = []
@@ -154,6 +163,7 @@ def main(n_iters):
             
             if mu1 < 0:
                 mu1 *= -1
+            
             if mu2 < 0:
                 mu2 += 360
             if mu2 > 360:
@@ -164,6 +174,8 @@ def main(n_iters):
             normal_dist_angle = Normal(mu2, sigma2)
 
             distance = normal_dist_distance.sample()
+            if distance>500:
+                distance=50
             angle    = normal_dist_angle.sample()
             
             log_prob_distance = normal_dist_distance.log_prob(distance).unsqueeze(0)
@@ -181,7 +193,7 @@ def main(n_iters):
             log_probs_angle.append(log_prob_angle )
             
             
-            next_state, reward, done, distance_avarage,_ = env.step(distance, angle, distance_avarage)
+            next_state, reward, done, _ = env.step(distance, angle)
 
             cum_reward += reward
             
