@@ -221,7 +221,7 @@ class game():
 
 
     def step(self, distance, angle):
-        reward =(-distance)
+        reward =(-distance/10)
         done = 0
         epsilon = 0.1
         self.angle = (((angle)))
@@ -232,6 +232,7 @@ class game():
         
         if (self.playerRect.top > self.winH or self.playerRect.top < 0 or self.playerRect.left > self.winW or self.playerRect.left < 0):
             reward = float(-distance-1000)
+            print(distance)
             done = 1
 
         if self.playerHasHitBaddie():
@@ -287,5 +288,3 @@ if __name__ == '__main__':
     
     import cart_pole_PT_AC
     cart_pole_PT_AC.main(n_iters = 10000)
-
-

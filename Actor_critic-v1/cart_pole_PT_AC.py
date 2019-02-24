@@ -22,22 +22,23 @@ class ActorCritic(torch.nn.Module):
     def __init__(self , enc_in ):
         super(ActorCritic, self).__init__( )
         
-        enc_in = 9 * 4 
-        enc_out = 18
+        enc_in = 36
+        
+        enc_out = 64
         
         dec_in = enc_out 
-        dec_out = 9
+        dec_out = 36
         
-        last_layer_fc_out = 36
+        last_layer_fc_out =36
         
-        self.conv1 = torch.nn.Sequential(nn.Conv2d(1, 1, kernel_size=5, padding=2),
+        self.conv1 = torch.nn.Sequential(nn.Conv2d(1, 16, kernel_size=3, padding=1,stride=1),
                                           torch.nn.LeakyReLU(),
                                           nn.MaxPool2d(2))
-        self.conv2 = torch.nn.Sequential(nn.Conv2d(1, 1, kernel_size=5, padding=2),
+        self.conv2 = torch.nn.Sequential(nn.Conv2d(16, 16, kernel_size=3, padding=1,stride=1),
                                           #torch.nn.LeakyReLU(),
                                           #nn.BatchNorm2d(1),
                                           nn.MaxPool2d(2))
-        self.conv3 = torch.nn.Sequential(nn.Conv2d(1, 1, kernel_size=5, padding=2),
+        self.conv3 = torch.nn.Sequential(nn.Conv2d(16, 32, kernel_size=3, padding=1,stride=1),
                                           torch.nn.LeakyReLU(),
                                           #nn.BatchNorm2d(1),
                                           nn.MaxPool2d(2))
@@ -47,14 +48,14 @@ class ActorCritic(torch.nn.Module):
         self.fc_enc  = nn.Linear(enc_in,enc_out) # enc_input_layer
         
         
-        self.actor_mu_dec   =nn.Linear(dec_in, last_layer_fc_out)
+        self.actor_mu_dec   =nn.Linear(dec_in, dec_out)
         self.actor_mu = nn.Linear(last_layer_fc_out, 2)
         
-        self.actor_sigma_dec= nn.Linear(dec_in, last_layer_fc_out)
+        self.actor_sigma_dec= nn.Linear(dec_in, dec_out)
         self.actor_sigma = nn.Linear(last_layer_fc_out, 2)
         
         
-        self.critic_dec     = nn.Linear(dec_in, last_layer_fc_out)
+        self.critic_dec     = nn.Linear(dec_in, dec_out)
         self.critic_linear = nn.Linear(last_layer_fc_out, 1)
         
         
@@ -78,8 +79,7 @@ class ActorCritic(torch.nn.Module):
         #print(x.shape)
         self.state = torch.cat((self.state, x), 1)
         self.state = self.state[:,x.shape[1]:]
-        #print(self.state)
-
+               
         x = F.relu(self.fc_enc(self.state))
         
         mu_dec = self.actor_mu_dec(x)
@@ -120,7 +120,7 @@ def main(n_iters):
         #rrt_obj = rrt.RRT(env, actor_distance, actor_angle, convolution)
         #actor_distance, actor_angle, convolution = rrt_obj.runRRT(NUM_OF_RRT_EPOCH, path)
     print('RRT training has been done!')
-    lr = .01
+    lr = .001
     optimizer = optim.Adam(ac.parameters(), lr = lr)
     
     cum_rewards = []
@@ -128,7 +128,7 @@ def main(n_iters):
         
     for i in range(1, n_iters):
         
-        if (i % 100 == 0):
+        if (i % 500 == 0):
             print(i)
             print(lr)
             lr = float("{0:.3f}".format(lr*0.9))
@@ -163,7 +163,7 @@ def main(n_iters):
             
             if mu1 < 0:
                 mu1 *= -1
-            
+          
             if mu2 < 0:
                 mu2 += 360
             if mu2 > 360:
@@ -174,8 +174,11 @@ def main(n_iters):
             normal_dist_angle = Normal(mu2, sigma2)
 
             distance = normal_dist_distance.sample()
-            if distance>500:
-                distance=50
+            if distance<0:
+                distance*=-1
+            if distance>17:
+                distance=5
+
             angle    = normal_dist_angle.sample()
             
             log_prob_distance = normal_dist_distance.log_prob(distance).unsqueeze(0)
@@ -257,7 +260,7 @@ def main(n_iters):
             env =  gameEnv.game(level = 'EASY')
 
         all_avg_cum_rewards.append(sum(cum_rewards)/len(cum_rewards))
-                
+        os.system('%clear')
         plt.figure(figsize=(20,5))
         plt.plot(list(range(0, len(all_avg_cum_rewards ))),all_avg_cum_rewards , '-b', label = 'reward average')
         plt.plot(list(range(0, len(cum_rewards))),cum_rewards, '-g', label = 'reward per game')
@@ -270,4 +273,3 @@ def main(n_iters):
 if __name__ == '__main__':
     n_iters = 100000
     main( int(n_iters))
-
