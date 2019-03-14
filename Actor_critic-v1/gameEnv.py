@@ -234,9 +234,10 @@ class game():
         
         wayPoint = pygame.draw.line(self.windowSurface, (255,255,255), (playerCurrent_X, playerCurrent_Y), (target_X, target_Y), 7)
 
-        
-        self.playerRect.x = target_X
-        self.playerRect.y = target_Y
+        if not(target_X > 600 or target_X<0):        
+            self.playerRect.x = target_X
+        if not(target_Y > 600 or target_Y<0):    
+            self.playerRect.y = target_Y
         
         if(self.nodeHasHitBaddie(wayPoint)):
             reward = (-1000)
@@ -244,15 +245,16 @@ class game():
             
         if (self.playerRect.top > self.winH or self.playerRect.top < 0 or self.playerRect.left > self.winW or self.playerRect.left < 0):
             reward = float(-distance-1000)
-            print(distance)
+            #print(distance)
             done = 0
 
         if self.playerHasHitBaddie():
             reward = (-distance-1000)
             done = 0
         if self.playerHasRichDestiny():
-             reward = (distance+1000)
+             reward = (+1000)
              done = 1
+             print("*****************************************************************************************")
         self.updateDisplay() 
         n_s = self.getState()
         #distance_cum += distance

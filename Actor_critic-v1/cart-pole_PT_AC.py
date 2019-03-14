@@ -182,6 +182,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
             normal_dist_angle = Normal(mu2, sigma2)
 
             distance = normal_dist_distance.sample()
+            
            
             angle    = normal_dist_angle.sample()
             
@@ -227,13 +228,8 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
             #env.updateDisplay()
                               
             env.mainClock.tick(env.FPS)
-            if (env.playerHasHitBaddie()       or
-              env.playerRect.top > env.winH   or
-              env.playerRect.top < 0           or
-              env.playerRect.left > env.winW  or
-              env.playerRect.left < 0):
-                break
-        print('avg_reward: ', sum(cum_rewards)/len(cum_rewards))
+            
+        
         cum_rewards.append(cum_reward)
         cum_reward = 0
        
@@ -300,16 +296,14 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
             #for param in actor_distance.parameters():
             #    print(param.grad)
             #input()
-        except:
-            #env =  gameEnv.game(actor_distance, actor_angle, critic, level = 'EASY')
+        except Exception as e:  
             env =  gameEnv.game(level = 'EASY')
 
-            print("something wrong happened")
         all_avg_cum_rewards.append(sum(cum_rewards)/len(cum_rewards))
-        os.system('%clear')
+        #os.system('%clear')
         plt.figure(figsize=(20,5))
         plt.plot(list(range(0, len(all_avg_cum_rewards ))),all_avg_cum_rewards , '-b', label = 'reward average')
-        plt.plot(list(range(0, len(cum_rewards))),cum_rewards, '-g', label = 'reward per game')
+        #plt.plot(list(range(0, len(cum_rewards))),cum_rewards, '-g', label = 'reward per game')
         plt.savefig('Reward Plot')
         plt.show()
 
