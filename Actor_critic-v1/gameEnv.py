@@ -1,5 +1,5 @@
 from torchvision import transforms
-import main
+#import main
 import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
@@ -223,13 +223,24 @@ class game():
     def step(self, distance, angle):
         reward =(-distance/10)-100
         done = 0
-        epsilon = 0.1
         self.angle = (((angle)))
         self.playerMoveRate =  ((distance))
         
-        self.playerRect.x += (math.sin(self.angle) ) * (self.playerMoveRate )
-        self.playerRect.y += (math.cos(self.angle) ) * (self.playerMoveRate )
+        playerCurrent_X = self.playerRect.x
+        playerCurrent_Y = self.playerRect.y
         
+        target_X = self.playerRect.x + (math.sin(self.angle) ) * (self.playerMoveRate )
+        target_Y = self.playerRect.y + (math.cos(self.angle) ) * (self.playerMoveRate )
+        
+        wayPoint = pygame.draw.line(self.windowSurface, (255,255,255), (playerCurrent_X, playerCurrent_Y), (target_X, target_Y), 7)
+
+        
+        self.playerRect.x = target_X
+        self.playerRect.y = target_Y
+        
+        if(self.nodeHasHitBaddie(wayPoint)):
+            reward = (-distance-1000)
+            
         if (self.playerRect.top > self.winH or self.playerRect.top < 0 or self.playerRect.left > self.winW or self.playerRect.left < 0):
             reward = float(-distance-1000)
             print(distance)
