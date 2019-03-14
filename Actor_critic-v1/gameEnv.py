@@ -239,7 +239,7 @@ class game():
         self.playerRect.y = target_Y
         
         if(self.nodeHasHitBaddie(wayPoint)):
-            reward = (-distance-1000)
+            reward = (-1000)
             done = 0
             
         if (self.playerRect.top > self.winH or self.playerRect.top < 0 or self.playerRect.left > self.winW or self.playerRect.left < 0):
