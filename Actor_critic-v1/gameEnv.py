@@ -221,7 +221,7 @@ class game():
 
 
     def step(self, distance, angle):
-        reward =(-distance/10)
+        reward =(-distance/10)-100
         done = 0
         epsilon = 0.1
         self.angle = (((angle)))
@@ -273,13 +273,12 @@ class game():
             r = int(math.sqrt((d['rect'].x - posX)**2 + (d['rect'].y - posY)**2))
             pygame.draw.circle(self.windowSurface, (0,0,0,0), (posX,posY), r,1)
 
-        pygame.draw.line(self.windowSurface, (255,0,0,0), (0, 0), (self.winW, 0))
-        pygame.draw.line(self.windowSurface, (255,0,0,0), (0, 0), (0, self.winH))
-        pygame.draw.line(self.windowSurface, (255,0,0,0), (0, self.winH-1), (self.winW-1, self.winH-1))
-        pygame.draw.line(self.windowSurface, (255,0,0,0), (self.winW-1, 0), (self.winW-1, self.winH-1))
+        pygame.draw.line(self.windowSurface, (0,255,0,0), (0, 0), (self.winW, 0), 7)
+        pygame.draw.line(self.windowSurface, (0,255,0,0), (0, 0), (0, self.winH),  7)
+        pygame.draw.line(self.windowSurface, (0,255,0,0), (0, self.winH-1), (self.winW-1, self.winH-1), 7)
+        pygame.draw.line(self.windowSurface, (0,255,0,0), (self.winW-1, 0), (self.winW-1, self.winH-1), 7)
         
         pygame.display.update()
-
 
         
             
