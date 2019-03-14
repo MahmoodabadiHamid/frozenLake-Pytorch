@@ -206,17 +206,18 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
             cum_reward += reward
             #print(cum_reward)
             #input()
-            if (done):
-                env.terminate()
-                break
-                #print('hi')
+            
                 
             values.append(value)
             rewards.append(torch.tensor([reward], dtype=torch.float))#, device=device))
             masks.append(torch.tensor([1-done], dtype=torch.float))#, device=device))
 
             state = next_state.to(device)
-            
+
+            if (done):
+                env.terminate()
+                break
+                #print('hi')
             #print(state)
             #if done:
                 #print('Iteration: {}, Score: {}'.format(iter, i))
