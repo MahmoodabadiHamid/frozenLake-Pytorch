@@ -129,6 +129,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
     optimizerActorAngle = optim.Adam(actor_angle.parameters(),lr)
     optimizerC = optim.Adam(critic.parameters())
     cum_rewards = []
+    all_avg_cum_rewards = []
         
     for i in range(n_iters):
         #state = (env.getState())
@@ -143,7 +144,8 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
 
         #for i in count():
         cum_reward = 0
-        all_avg_cum_rewards = []
+        
+        
 
         while True :
             e = pygame.event.get()
