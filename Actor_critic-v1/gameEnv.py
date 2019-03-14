@@ -240,15 +240,16 @@ class game():
         
         if(self.nodeHasHitBaddie(wayPoint)):
             reward = (-distance-1000)
+            done = 0
             
         if (self.playerRect.top > self.winH or self.playerRect.top < 0 or self.playerRect.left > self.winW or self.playerRect.left < 0):
             reward = float(-distance-1000)
             print(distance)
-            done = 1
+            done = 0
 
         if self.playerHasHitBaddie():
             reward = (-distance-1000)
-            done = 1
+            done = 0
         if self.playerHasRichDestiny():
              reward = (distance+1000)
              done = 1
