@@ -128,8 +128,8 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
     optimizerActorDistance = optim.Adam(actor_distance.parameters(),lr)
     optimizerActorAngle = optim.Adam(actor_angle.parameters(),lr)
     optimizerC = optim.Adam(critic.parameters())
-    cum_rewards = []
-    all_avg_cum_rewards = []
+    cum_rewards = [0]
+    all_avg_cum_rewards = [0]
         
     for i in range(n_iters):
         #state = (env.getState())
@@ -233,7 +233,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
               env.playerRect.left > env.winW  or
               env.playerRect.left < 0):
                 break
-        print('cum_reward: ', cum_reward)
+        print('avg_reward: ', sum(cum_rewards)/len(cum_rewards))
         cum_rewards.append(cum_reward)
         cum_reward = 0
        
