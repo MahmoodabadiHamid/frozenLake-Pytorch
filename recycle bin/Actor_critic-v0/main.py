@@ -5,6 +5,8 @@ import torch.optim as optim
 import pytorch_networks as networks
 
 
+
+
 def main(numOfEpisodes):
     print('Version 3')
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
