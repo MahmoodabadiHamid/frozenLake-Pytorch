@@ -300,10 +300,12 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
             env =  gameEnv.game(level = 'EASY')
 
         all_avg_cum_rewards.append(sum(cum_rewards)/len(cum_rewards))
-        #os.system('%clear')
+        print(all_avg_cum_rewards[-1])
         plt.figure(figsize=(20,5))
-        plt.plot(list(range(0, len(all_avg_cum_rewards ))),all_avg_cum_rewards , '-b', label = 'reward average')
         #plt.plot(list(range(0, len(cum_rewards))),cum_rewards, '-g', label = 'reward per game')
+        plt.plot(list(range(0, len(all_avg_cum_rewards ))),all_avg_cum_rewards , '-b', label = 'reward average')
+        if (len(cum_rewards) % 100 == 0):
+            plt.savefig(str(len(cum_rewards)) + ' '+ + str(all_avg_cum_rewards[-1]) + 'Reward Plot' )    
         plt.savefig('Reward Plot')
         plt.show()
 
