@@ -18,7 +18,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 #env = gym.make("CartPole-v0").unwrapped
 
-state_size = 12*12#env.observation_space.shape[0]
+state_size = 16#env.observation_space.shape[0]
 action_size = 2#env.action_space.n
 lr = 0.1e-3
 
@@ -29,21 +29,21 @@ class Convolution(nn.Module):
         #_____________ Starting CNN Layer ___________________________
         
         self.layer1 = nn.Sequential(
-                nn.Conv2d(1, 1, kernel_size=5, padding=2),
+                nn.Conv2d(1, 1, kernel_size=3, padding=2),
                 #nn.BatchNorm2d(1),
-                #nn.ReLU(),
+                nn.ReLU(),
                 nn.MaxPool2d(2))
 
         self.layer2 = nn.Sequential(
-                nn.Conv2d(1, 1, kernel_size=5, padding=2),
+                nn.Conv2d(1, 1, kernel_size=3, padding=2),
                 #nn.BatchNorm2d(1),
-                #nn.ReLU(),
+                nn.ReLU(),
                 nn.MaxPool2d(2))
 
         self.layer3 = nn.Sequential(
-                nn.Conv2d(1, 1, kernel_size=5, padding=2),
+                nn.Conv2d(1, 1, kernel_size=3, padding=2),
                 #nn.BatchNorm2d(1),
-                #nn.ReLU(),
+                nn.ReLU(),
                 nn.MaxPool2d(2))
 
         self.layer4 = nn.Sequential(
@@ -59,11 +59,11 @@ class Convolution(nn.Module):
         #print('here')
         #print(type(state))
         state=state.to(device)
-        conv1 = self.layer1(state)
-        conv2 = self.layer2(conv1)
-        conv3 = self.layer3(conv2)
-        conv4 = self.layer4(conv3)
-        state = conv4.view(1, -1)
+        state = self.layer1(state)
+        state = self.layer2(state)
+        state = self.layer3(state)
+        #state = self.layer4(conv3)
+        state = state.view(1, -1)
         return state
 
 class Actor(nn.Module):
@@ -103,6 +103,7 @@ class Critic(nn.Module):
         self.linear3 = nn.Linear(256, 1)
 
     def forward(self, state):
+        
         output = F.relu(self.linear1(state))
         output = F.relu(self.linear2(output))
         value = self.linear3(output)
@@ -124,12 +125,13 @@ def compute_returns(next_value, rewards, masks, gamma=0.99):
     return returns
 
 
-def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
+def main(actor_distance, actor_angle, critic, convolution, env, n_iters, cum_rewards,all_avg_cum_rewards):
     optimizerActorDistance = optim.Adam(actor_distance.parameters(),lr)
     optimizerActorAngle = optim.Adam(actor_angle.parameters(),lr)
     optimizerC = optim.Adam(critic.parameters())
-    cum_rewards = []
-    all_avg_cum_rewards = []
+
+    
+    
         
     for i in range(n_iters):
         #state = (env.getState())
@@ -177,7 +179,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
                 mu2  -=  360
             
             
-            #print('dsf ',dist.log_prob(action).unsqueeze(0))
+            
             normal_dist_distance = Normal(mu1, sigma1)
             normal_dist_angle = Normal(mu2, sigma2)
 
@@ -285,6 +287,9 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
             torch.save(actor_angle, str(path)+'actor_angle.pkl')
             torch.save(critic, str(path)+'critic.pkl')
             torch.save(convolution.to(device), str(path)+'convolution.pkl')
+
+            np.save(str(path)+'cum_rewards.npy', cum_rewards)
+            np.save(str(path)+'all_avg_cum_rewards.npy', all_avg_cum_rewards)
             
             
             #print(critic_loss)
@@ -342,6 +347,19 @@ if __name__ == '__main__':
     else:
         convolution = Convolution().to(device)
         print('convolution Model created')
+
+        
+#______________________________________________________________________________________________________________________
+    if os.path.exists(str(path)+'cum_rewards.npy'):
+        cum_rewards = list(np.load(str(path)+'cum_rewards.npy'))
+    else:
+        cum_rewards = []
+
+    if os.path.exists(str(path)+'all_avg_cum_rewards.npy'):
+        all_avg_cum_rewards = list(np.load(str(path)+'all_avg_cum_rewards.npy'))
+    else:
+        all_avg_cum_rewards = []
+#______________________________________________________________________________________________________________________
     
 #    env =  gameEnv.game(actor_distance, actor_angle, critic)
     env =  gameEnv.game(level = 'EASY')
@@ -355,5 +373,5 @@ if __name__ == '__main__':
     env.FPS = 24
     n_iters = 100000# input('number of iteration? ')
     print('RRT training has been done!')
-    main(actor_distance, actor_angle, critic, convolution, env, int(n_iters))
+    main(actor_distance, actor_angle, critic, convolution, env, int(n_iters), cum_rewards,all_avg_cum_rewards )
 
