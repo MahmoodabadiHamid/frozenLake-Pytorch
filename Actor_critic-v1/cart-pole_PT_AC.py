@@ -60,9 +60,9 @@ class Convolution(nn.Module):
         #print(type(state))
         state=state.to(device)
         conv1 = self.layer1(state)
-        conv2 = self.layer2(state)
-        conv3 = self.layer3(state)
-        conv4 = self.layer4(state)
+        conv2 = self.layer2(conv1)
+        conv3 = self.layer3(conv2)
+        conv4 = self.layer4(conv3)
         state = conv4.view(1, -1)
         return state
 
@@ -128,8 +128,8 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
     optimizerActorDistance = optim.Adam(actor_distance.parameters(),lr)
     optimizerActorAngle = optim.Adam(actor_angle.parameters(),lr)
     optimizerC = optim.Adam(critic.parameters())
-    cum_rewards = [0]
-    all_avg_cum_rewards = [0]
+    cum_rewards = []
+    all_avg_cum_rewards = []
         
     for i in range(n_iters):
         #state = (env.getState())
@@ -304,8 +304,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters):
         plt.figure(figsize=(20,5))
         #plt.plot(list(range(0, len(cum_rewards))),cum_rewards, '-g', label = 'reward per game')
         plt.plot(list(range(0, len(all_avg_cum_rewards ))),all_avg_cum_rewards , '-b', label = 'reward average')
-        if (len(cum_rewards) % 100 == 0):
-            plt.savefig(str(len(cum_rewards)) + ' '+ + str(all_avg_cum_rewards[-1]) + 'Reward Plot' )    
+        
         plt.savefig('Reward Plot')
         plt.show()
 
