@@ -20,7 +20,7 @@ print(device)
 
 state_size = 16#env.observation_space.shape[0]
 action_size = 2#env.action_space.n
-lr = 0.1e-3
+lr = 0.1e-2
 
 
 class Convolution(nn.Module):
