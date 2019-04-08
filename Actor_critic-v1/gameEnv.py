@@ -38,8 +38,8 @@ class game():
         self.baddieImage = pygame.image.load('files/baddie.jpg')
         self.destinyImage = pygame.image.load('files/destiny.png')
         self.playerRect = self.playerImage.get_rect()
-        self.playerRect.x = random.randint(0,550)
-        self.playerRect.y = random.randint(0,550)
+        self.playerRect.x =random.randint(0,550)
+        self.playerRect.y =random.randint(0,550)
         #print(self.playerRect)
         #input()
         #print('player ', self.playerRect)
@@ -221,7 +221,7 @@ class game():
 
 
     def step(self, distance, angle):
-        reward =(-distance/10)-100
+        reward =(-distance)-20
         done = 0
         self.angle = (((angle)))
         self.playerMoveRate =  ((distance))
@@ -234,25 +234,25 @@ class game():
         
         wayPoint = pygame.draw.line(self.windowSurface, (255,255,255), (playerCurrent_X, playerCurrent_Y), (target_X, target_Y), 7)
 
-        if not(target_X > 600 or target_X<0):        
+        if not(target_X >= 600 or target_X<=0):        
             self.playerRect.x = target_X
-        if not(target_Y > 600 or target_Y<0):    
+        if not(target_Y >= 600 or target_Y<=0):    
             self.playerRect.y = target_Y
         
         if(self.nodeHasHitBaddie(wayPoint)):
             reward = (-1000)
             done = 0
             
-        if (self.playerRect.top > self.winH or self.playerRect.top < 0 or self.playerRect.left > self.winW or self.playerRect.left < 0):
-            reward = float(-distance-1000)
+        if (self.playerRect.top >= self.winH or self.playerRect.top <= 0 or self.playerRect.left >= self.winW or self.playerRect.left <= 0):
+            reward = float(-1000)
             #print(distance)
             done = 0
 
         if self.playerHasHitBaddie():
-            reward = (-distance-1000)
+            reward = (-1000)
             done = 0
         if self.playerHasRichDestiny():
-             reward = (+1000)
+             reward = (+10000)
              done = 1
              print("*****************************************************************************************")
         self.updateDisplay() 
