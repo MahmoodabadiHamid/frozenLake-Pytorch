@@ -20,7 +20,7 @@ print(device)
 
 state_size = 256#env.observation_space.shape[0]
 action_size = 2#env.action_space.n
-lr = 0.1e-2
+lr = 0.1e-4
 
 
 class Convolution(nn.Module):
@@ -31,8 +31,8 @@ class Convolution(nn.Module):
         self.layer1 = nn.Sequential(
                 nn.Conv2d(1, 16, kernel_size=3, padding=2),
                 #nn.BatchNorm2d(1),
-                nn.ReLU(),
-                nn.MaxPool2d(2))
+                nn.ReLU())
+                #nn.MaxPool2d(2))
 
         self.layer2 = nn.Sequential(
                 nn.Conv2d(16, 32, kernel_size=3, padding=2),
@@ -43,8 +43,8 @@ class Convolution(nn.Module):
         self.layer3 = nn.Sequential(
                 nn.Conv2d(32, 16, kernel_size=3, padding=2),
                 #nn.BatchNorm2d(1),
-                nn.ReLU(),
-                nn.MaxPool2d(2))
+                nn.ReLU())
+                #nn.MaxPool2d(2))
 
         self.layer4 = nn.Sequential(
                 nn.Conv2d(16, 1, kernel_size=5, padding=2),
