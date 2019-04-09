@@ -18,7 +18,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 #env = gym.make("CartPole-v0").unwrapped
 
-state_size = 256#env.observation_space.shape[0]
+state_size =4096#env.observation_space.shape[0]
 action_size = 2#env.action_space.n
 lr = 0.1e-4
 
@@ -75,6 +75,8 @@ class Actor(nn.Module):
         self.linear3 = nn.Linear(256, self.action_size)
 
     def forward(self, state):
+        #print(state.shape)
+        #input()
         output = F.relu(self.linear1(state))
         output = F.relu(self.linear2(output))
         output = self.linear3(output)[0]
@@ -108,7 +110,7 @@ class Critic(nn.Module):
         return value
 
 
-def compute_returns(next_value, rewards, masks, gamma=0.99):
+def compute_returns(next_value, rewards, masks, gamma=0.85):
     #rewards=rewards.to(device)
     #masks=masks.to(device)
     R = next_value.to(device)
@@ -164,6 +166,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters, cum_rew
             mu2,sigma2 = actor_angle(state)
             
             value = critic(state)
+            #print(value)
             #action = dist.sample()
             if sigma1 < 0:
                 sigma1 *= -1

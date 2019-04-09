@@ -221,8 +221,9 @@ class game():
 
 
     def step(self, distance, angle):
-        reward =(-distance)-20
+        
         done = 0
+        k=0
         self.angle = (((angle)))
         self.playerMoveRate =  ((distance))
         
@@ -241,20 +242,26 @@ class game():
         
         if(self.nodeHasHitBaddie(wayPoint)):
             reward = (-1000)
+            k=1
             done = 0
             
         if (self.playerRect.top >= self.winH or self.playerRect.top <= 0 or self.playerRect.left >= self.winW or self.playerRect.left <= 0):
             reward = float(-1000)
+            k=1
             #print(distance)
             done = 0
 
         if self.playerHasHitBaddie():
             reward = (-1000)
+            k=1
             done = 0
         if self.playerHasRichDestiny():
-             reward = (+10000)
+             reward = (+100000)
+             k=1
              done = 1
              print("*****************************************************************************************")
+        if k==0:
+            reward =(-distance)-200
         self.updateDisplay() 
         n_s = self.getState()
         #distance_cum += distance
