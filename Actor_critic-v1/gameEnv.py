@@ -34,7 +34,7 @@ class game():
             transforms.Grayscale(num_output_channels=1),
             transforms.ToTensor(),
                 ])
-        self.playerImage = pygame.transform.scale(pygame.image.load('files/large.gif'),(20,20))                 
+        self.playerImage = pygame.transform.scale(pygame.image.load('files/large.gif'),(30,30))                 
         self.baddieImage = pygame.image.load('files/baddie.jpg')
         self.destinyImage = pygame.image.load('files/destiny.png')
         self.playerRect = self.playerImage.get_rect()
@@ -211,7 +211,7 @@ class game():
                  return True
          return False
 
-    def compute_returns(self, next_value, rewards, masks, gamma=0.9):
+    def compute_returns(self, next_value, rewards, masks, gamma=0.99):
         R = next_value
         returns = []
         for step in reversed(range(len(rewards))):
@@ -223,7 +223,7 @@ class game():
     def step(self, distance, angle):
         
         done = 0
-        k=0
+        reward =(-distance)-200
         self.angle = (((angle)))
         self.playerMoveRate =  ((distance))
         
@@ -241,27 +241,27 @@ class game():
             self.playerRect.y = target_Y
         
         if(self.nodeHasHitBaddie(wayPoint)):
-            reward = (-1000)
-            k=1
+            reward =(-1000)
+           
             done = 0
             
         if (self.playerRect.top >= self.winH or self.playerRect.top <= 0 or self.playerRect.left >= self.winW or self.playerRect.left <= 0):
             reward = float(-1000)
-            k=1
+           
             #print(distance)
             done = 0
 
         if self.playerHasHitBaddie():
             reward = (-1000)
-            k=1
+            
             done = 0
         if self.playerHasRichDestiny():
-             reward = (+100000)
-             k=1
+             reward = (100000)
+             
              done = 1
              print("*****************************************************************************************")
-        if k==0:
-            reward =(-distance)-200
+        
+            
         self.updateDisplay() 
         n_s = self.getState()
         #distance_cum += distance

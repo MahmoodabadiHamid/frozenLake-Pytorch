@@ -20,7 +20,7 @@ print(device)
 
 state_size =4096#env.observation_space.shape[0]
 action_size = 2#env.action_space.n
-lr = 0.1e-4
+lr = 0.1e-3
 
 
 class Convolution(nn.Module):
@@ -110,7 +110,7 @@ class Critic(nn.Module):
         return value
 
 
-def compute_returns(next_value, rewards, masks, gamma=0.85):
+def compute_returns(next_value, rewards, masks, gamma=0.88):
     #rewards=rewards.to(device)
     #masks=masks.to(device)
     R = next_value.to(device)
