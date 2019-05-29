@@ -110,7 +110,7 @@ class Critic(nn.Module):
         return value
 
 
-def compute_returns(next_value, rewards, masks, gamma=0.88):
+def compute_returns(next_value, rewards, masks, gamma=0.99):
     #rewards=rewards.to(device)
     #masks=masks.to(device)
     R = next_value.to(device)
@@ -210,7 +210,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters, cum_rew
             log_probs_distance.append(log_prob_distance )
             log_probs_angle.append(log_prob_angle )
             
-            
+            print(distance)
             next_state, reward, done, _ = env.step(distance, angle)
 
             cum_reward += reward
