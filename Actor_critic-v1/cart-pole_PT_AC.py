@@ -27,7 +27,7 @@ class Convolution(nn.Module):
     def __init__(self):
         super(Convolution, self).__init__()
         #_____________ Starting CNN Layer ___________________________
-        
+
         self.layer1 = nn.Sequential(
                 nn.Conv2d(1, 16, kernel_size=3, padding=2),
                 #nn.BatchNorm2d(1),
@@ -51,13 +51,10 @@ class Convolution(nn.Module):
                 #nn.BatchNorm2d(1),
                 #nn.ReLU(),
                 nn.MaxPool2d(2))
-        
+
         #_____________ End of Conv Layer definition ___________________________
     def forward(self, state):
-        
-
         state=state.to(device)
-        
         state = self.layer1(state)
         state = self.layer2(state)
         state = self.layer3(state)
@@ -80,10 +77,10 @@ class Actor(nn.Module):
         output = F.relu(self.linear1(state))
         output = F.relu(self.linear2(output))
         output = self.linear3(output)[0]
-        
+
         mu = output[0]
         sigma = output[1]
-        
+
         #print('aaa')
         #input(output)
         #distribution_distance = torch.normal(mu1, sigma1)
@@ -97,13 +94,13 @@ class Critic(nn.Module):
         super(Critic, self).__init__()
         self.state_size = state_size
         self.action_size = action_size
-        
+
         self.linear1 = nn.Linear(self.state_size, 128)
         self.linear2 = nn.Linear(128, 256)
         self.linear3 = nn.Linear(256, 1)
 
     def forward(self, state):
-        
+
         output = F.relu(self.linear1(state))
         output = F.relu(self.linear2(output))
         value = self.linear3(output)
@@ -130,41 +127,36 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters, cum_rew
     optimizerActorAngle = optim.Adam(actor_angle.parameters(),lr)
     optimizerC = optim.Adam(critic.parameters())
 
-    
-    
-        
+
     for i in range(n_iters):
-        
         log_probs_distance = []
         log_probs_angle = []
         values = []
         rewards = []
         masks = []
-        #entropy = 0
-        #env.reset()
-
-        #for i in count():
         cum_reward = 0
-        
-        
-
-        while True :
+        running = True
+        while running :
             e = pygame.event.get()
+            event = pygame.event.wait ()
+            if event.type == pygame.QUIT:
+                running = False
+
             env.state = torch.zeros([1, 36*4], dtype=torch.float32).to(device)
             state = (env.getState().to(device))
-       
-            #env.render()
-          
 
-            
+            #env.render()
+
+
+
             state = convolution(state)
             state = ((state).to(device))
             #state = np.reshape()
 
-            
+
             mu1,sigma1 = actor_distance(state)
             mu2,sigma2 = actor_angle(state)
-            
+
             value = critic(state)
             #print(value)
             #action = dist.sample()
@@ -172,27 +164,23 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters, cum_rew
                 sigma1 *= -1
             if sigma2 < 0:
                 sigma2 *= -1
-            
+
             if mu1 < 0:
                 mu1 *= -1
-          
+
             if mu2 < 0:
                 mu2 += 360
             if mu2 > 360:
                 mu2  -=  360
-            
-            
-            
+
             normal_dist_distance = Normal(mu1, sigma1)
             normal_dist_angle = Normal(mu2, sigma2)
 
             distance = normal_dist_distance.sample()
-           # print("Distance:",distance)
-           
+
             angle    = normal_dist_angle.sample()
             if angle<0:
                 angle=360+angle
-            #print("Angle:",angle)
 
             #log_prob_distance = torch.log(torch.pow( torch.sqrt(2. * sigma1 * np.pi) , -1)) - (normal_dist_distance - mu1)*(normal_dist_distance - mu1)*torch.pow((2. * sigma1), -1)
             log_prob_distance = normal_dist_distance.log_prob(distance).unsqueeze(0)
@@ -202,22 +190,19 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters, cum_rew
 
             entropy_distance = 0.5 * (torch.log(2. * np.pi * sigma1 ) + 1.)
             entropy_angle = 0.5 * (torch.log(2. * np.pi * sigma2 ) + 1.)
-            
+
 
             log_prob_distance = log_prob_distance
             log_prob_angle = log_prob_angle
-            
+
             log_probs_distance.append(log_prob_distance )
             log_probs_angle.append(log_prob_angle )
-            
-            print(distance)
+
+
             next_state, reward, done, _ = env.step(distance, angle)
 
             cum_reward += reward
-            #print(cum_reward)
-            #input()
-            
-                
+
             values.append(value)
             rewards.append(torch.tensor([reward], dtype=torch.float))#, device=device))
             masks.append(torch.tensor([1-done], dtype=torch.float))#, device=device))
@@ -240,21 +225,22 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters, cum_rew
                 #print('Iteration: {}, Score: {}'.format(iter, i))
                 #break
             #env.updateDisplay()
-                              
+
             env.mainClock.tick(env.FPS)
-            
-        
+        pygame.quit()
+
+
         #cum_rewards.append(cum_reward)
         #cum_reward = 0
-       
 
-        
+
+
         #print(len(all_avg_cum_rewards ))
         print(all_avg_cum_rewards[-1])
         plt.figure(figsize=(20,5))
         #plt.plot(list(range(0, len(cum_rewards))),cum_rewards, '-g', label = 'reward per game')
         plt.plot(list(range(0, len(all_avg_cum_rewards ))),all_avg_cum_rewards , '-b', label = 'reward average')
-        
+
         plt.savefig('Reward Plot')
         plt.show()
         next_state = ((convolution(next_state)))
@@ -267,20 +253,20 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters, cum_rew
 
         log_probs_distance = torch.cat(log_probs_distance).to(device)
         log_probs_angle = torch.cat(log_probs_angle).to(device)
-        
+
         try:
-        
+
             returns = torch.cat(returns).detach().to(device)
             values = torch.cat(values).to(device)
-            
+
             advantage = returns - values
-            
+
             actor_distance_loss = -(log_probs_distance* advantage.detach()).mean().to(device)
             #print("log prob",log_probs_angle)
             #print("advantage",advantage.detach())
             actor_angle_loss = -(log_probs_angle * advantage.detach()).mean().to(device)
             critic_loss = advantage.pow(2).mean().to(device)
-    
+
             #print('actorloss', actor_loss)
             #input()
             #actor_loss = Variable(actor_loss , requires_grad = True)
@@ -288,20 +274,20 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters, cum_rew
             #grad_fn=<NegBackward>
             #actor_loss = torch.tensor(actor_loss, requires_grad=True)
             #critic_loss = torch.tensor(critic_loss, requires_grad=True)
-            
+
             optimizerActorDistance.zero_grad()
             optimizerActorAngle.zero_grad()
             optimizerC.zero_grad()
-            
+
             actor_distance_loss.backward(retain_graph=True)
             actor_angle_loss.backward(retain_graph=True)
-            
+
             critic_loss.backward(retain_graph=True)
             optimizerActorDistance.step()
             optimizerActorAngle.step()
             optimizerC.step()
             env =  gameEnv.game( level = 'EASY')
-            
+
             torch.save(actor_distance, str(path)+'actor_distance.pkl')
             torch.save(actor_angle, str(path)+'actor_angle.pkl')
             torch.save(critic, str(path)+'critic.pkl')
@@ -309,9 +295,9 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters, cum_rew
 
             np.save(str(path)+'cum_rewards.npy', cum_rewards)
             np.save(str(path)+'all_avg_cum_rewards.npy', all_avg_cum_rewards)
-            
-            
-            
+
+
+
             #print(critic_loss)
             #print(actor_distance_loss)
             #print(actor_angle_loss)
@@ -321,7 +307,7 @@ def main(actor_distance, actor_angle, critic, convolution, env, n_iters, cum_rew
             #for param in actor_distance.parameters():
             #    print(param.grad)
             #input()
-        except Exception as e:  
+        except Exception as e:
             env =  gameEnv.game(level = 'EASY')
 
 
@@ -330,22 +316,22 @@ if __name__ == '__main__':
     path = ''#input('input path: ')
     NUM_OF_RRT_ITER = 0
     NUM_OF_RRT_EPOCH = 10
-    
+
     if os.path.exists(str(path)+'actor_distance.pkl'):
         actor_distance = torch.load(str(path)+'actor_distance.pkl').to(device)
         print('actor_distance Model loaded')
     else:
         actor_distance = Actor(state_size, action_size).to(device)
         print('actor_distance Model created')
-        
+
     if os.path.exists(str(path)+'actor_angle.pkl'):
         actor_angle = torch.load(str(path)+'actor_angle.pkl').to(device)
         print('actor_angle Model loaded')
     else:
         actor_angle = Actor(state_size, action_size).to(device)
         print('actor_angle Model created')
-        
-    if os.path.exists(str(path)+'critic.pkl'): 
+
+    if os.path.exists(str(path)+'critic.pkl'):
         critic = torch.load(str(path)+'critic.pkl').to(device)
         print('Critic Model loaded')
     else:
@@ -358,7 +344,7 @@ if __name__ == '__main__':
         convolution = Convolution().to(device)
         print('convolution Model created')
 
-        
+
 #______________________________________________________________________________________________________________________
     if os.path.exists(str(path)+'cum_rewards.npy'):
         cum_rewards = list(np.load(str(path)+'cum_rewards.npy'))
@@ -370,7 +356,7 @@ if __name__ == '__main__':
     else:
         all_avg_cum_rewards = []
 #______________________________________________________________________________________________________________________
-    
+
 #    env =  gameEnv.game(actor_distance, actor_angle, critic)
     env =  gameEnv.game(level = 'EASY')
 
@@ -379,8 +365,15 @@ if __name__ == '__main__':
         print('RRT Iteration: ',str(k))
         #rrt_obj = rrt.RRT(env, actor_distance, actor_angle, convolution)
         #actor_distance, actor_angle, convolution = rrt_obj.runRRT(NUM_OF_RRT_EPOCH, path)
-        
+
     env.FPS = 24
     n_iters = 100000# input('number of iteration? ')
     print('RRT training has been done!')
-    main(actor_distance, actor_angle, critic, convolution, env, int(n_iters), cum_rewards,all_avg_cum_rewards )
+    import multiprocessing
+    print(multiprocessing.cpu_count())
+    from threading import Thread
+
+    t1=Thread(target=main,args=(actor_distance, actor_angle, critic, convolution, env, int(n_iters), cum_rewards,all_avg_cum_rewards ))
+    t2=Thread(target=main,args=(actor_distance, actor_angle, critic, convolution, env, int(n_iters), cum_rewards,all_avg_cum_rewards ))
+
+    #main(actor_distance, actor_angle, critic, convolution, env, int(n_iters), cum_rewards,all_avg_cum_rewards )
